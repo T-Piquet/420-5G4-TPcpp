@@ -153,10 +153,17 @@ void Library::displayAllBooks() {
         return;
     }
     
+	std::sort(books.begin(), books.end(), [](const unique_ptr<Book>& a, const unique_ptr<Book>& b) {
+		if (a->getTitle() == b->getTitle()) {
+			return a->getAuthor() < b->getAuthor();
+		}
+		return a->getTitle() < b->getTitle();
+	});
+
     cout << "\n=== TOUS LES LIVRES ===\n";
     for (size_t i = 0; i < books.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << books[i]->toString(*this) << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -169,11 +176,18 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+	std::sort(available.begin(), available.end(), [](const Book* a, const Book* b) {
+		if (a->getTitle() == b->getTitle()) {
+			return a->getAuthor() < b->getAuthor();
+		}
+		return a->getTitle() < b->getTitle();
+	});
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << available[i]->toString(*this) << "\n";
         cout << "---------------------------\n";
     }
 }

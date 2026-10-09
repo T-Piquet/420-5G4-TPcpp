@@ -68,6 +68,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (dataDir.empty()) {
+        cerr << "Erreur : le répertoire de donnees est requis.\n";
+        printUsage(argv[0]);
+        return 1;
+    }
+
     string booksFile;
     string usersFile;
     if (!dataDir.empty()) {
@@ -81,11 +87,13 @@ int main(int argc, char* argv[]) {
     }
 
     Library library;
-    FileManager fileManager(booksFile, usersFile);
+    FileManager fileManager(booksFile, usersFile, dataDir);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
     fileManager.loadLibraryData(library);
+
+	fileManager.tryCreateLogsFile();
     
     int choice;
     bool running = true;
@@ -113,6 +121,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+					fileManager.log("[AJOUT LIVRE] " + newBook.toFileFormat());
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -123,6 +132,7 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
                 
                 if (library.removeBook(isbn)) {
+					fileManager.log("[RETRAIT LIVRE] " + isbn);
                     cout << "Livre supprimé avec succès !\n";
                 } else {
                     cout << "Livre non trouvé.\n";
@@ -141,7 +151,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(library) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -159,7 +169,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(library) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -186,6 +196,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
+                    fileManager.log("[AJOUT UTILISATEUR] " + newUser.toFileFormat());
                     cout << "Utilisateur ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -202,6 +213,8 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    Book* checkedOutBook = library.findBookByISBN(isbn);
+                    fileManager.log("[EMPRUNT] " + checkedOutBook->toFileFormat());
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -214,6 +227,8 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
                 
                 if (library.returnBook(isbn)) {
+                    Book* returnedBook = library.findBookByISBN(isbn);
+                    fileManager.log("[RETOUR] " + returnedBook->toFileFormat());
                     cout << "Livre retourné avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
@@ -234,8 +249,10 @@ int main(int argc, char* argv[]) {
             
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
+                    fileManager.log("[SAUVEGARDE] SUCCES");
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
+                    fileManager.log("[SAUVEGARDE] ECHEC");
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
                 }
                 pauseForInput();
@@ -244,6 +261,7 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                fileManager.log("[SAUVEGARDE] BACKUP CREE");
                 pauseForInput();
                 break;
             }
