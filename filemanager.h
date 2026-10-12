@@ -11,10 +11,11 @@ class FileManager {
 private:
     string booksFileName;
     string usersFileName;
+    string journalFileName;
 
 public:
     // Constructor
-    FileManager(const string& booksFile, const string& usersFile);
+    FileManager(const string& booksFile, const string& usersFile, const string& journalFile);
     
     // File operations
     bool saveLibraryData(Library& library);
@@ -23,6 +24,7 @@ public:
     // Individual file operations
     bool saveBooksToFile(Library& library);
     bool saveUsersToFile(Library& library);
+    bool writeToJournal(string entry);
     bool loadBooksFromFile(Library& library);
     bool loadUsersFromFile(Library& library);
     

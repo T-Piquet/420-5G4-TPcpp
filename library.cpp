@@ -98,11 +98,11 @@ void Library::addUser(const User& user) {
 
 // Find user by ID
 User* Library::findUserById(const string& userId) {
+    
     auto it = find_if(users.begin(), users.end(),
         [&userId](const unique_ptr<User>& user) {
             return user->getUserId() == userId;
         });
-    
     return (it != users.end()) ? it->get() : nullptr;
 }
 
@@ -147,16 +147,31 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
+void Library::displayAllBooks(const string& filtre) {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+    auto filteredBooks = getAllBooks();
+    if (filtre == "1") {
+        std::sort(filteredBooks.begin(), filteredBooks.end(), [](Book* b1, Book* b2) {
+            return b1->getTitle() < b2->getTitle();
+        });
+    } else if (filtre == "2") {
+        std::sort(filteredBooks.begin(), filteredBooks.end(), [](Book* b1, Book* b2) {
+            return b1->getAuthor() < b2->getAuthor();
+            
+        });
+    }
+    
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < filteredBooks.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << filteredBooks[i]->toString() << "\n";       
+        if (!filteredBooks[i]->getAvailability()) {
+            cout << "Propriétaire actuel: " << findUserById(filteredBooks[i]->getBorrowerId())->getName() << "\n";
+        }
         cout << "-------------------------\n";
     }
 }

@@ -70,6 +70,7 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string journalFile;
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +79,12 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        journalFile = (filesystem::path(dataDir) / "journal.txt").string();
+
     }
 
     Library library;
-    FileManager fileManager(booksFile, usersFile);
+    FileManager fileManager(booksFile, usersFile, journalFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -113,6 +116,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    bool success = fileManager.writeToJournal("[AJOUT LIVRE] " + newBook.toFileFormat());
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -123,6 +127,7 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
                 
                 if (library.removeBook(isbn)) {
+                    fileManager.writeToJournal("[SUPPRESSION] " + isbn); //Fonction de journalisme
                     cout << "Livre supprimé avec succès !\n";
                 } else {
                     cout << "Livre non trouvé.\n";
@@ -167,11 +172,16 @@ int main(int argc, char* argv[]) {
                 break;
             }
             
-            case 5: // Display All Books
-                library.displayAllBooks();
+            case 5: {// Display All Books
+                string filtre = getInput("Entrez le type de filtre souhaité (1: Par titre 2: Par autheur 3: Aucun)\n");
+                while (filtre != "1" && filtre != "2" && filtre != "3") {
+                    cout << "Entrée invalide.\n";
+                    filtre = getInput("Entrez le type de filtre souhaité (1: Par titre 2: Par autheur 3: Aucun)\n");
+                }
+                library.displayAllBooks(filtre);
                 pauseForInput();
                 break;
-            
+            }
             case 6: // Display Available Books
                 library.displayAvailableBooks();
                 pauseForInput();
@@ -186,6 +196,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
+                    fileManager.writeToJournal("[AJOUT USER] " + newUser.toFileFormat()); //Fonction de journalisme
                     cout << "Utilisateur ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -202,6 +213,8 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    fileManager.writeToJournal("[EMPRUNT] " + library.findBookByISBN(isbn)->toFileFormat() + "|" +
+                    library.findUserById(userId)->toFileFormat()); //Fonction de journalisme
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -214,6 +227,7 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
                 
                 if (library.returnBook(isbn)) {
+                    fileManager.writeToJournal("[RETOUR] " + library.findBookByISBN(isbn)->toFileFormat()); //Fonction de journalisme
                     cout << "Livre retourné avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
@@ -234,6 +248,7 @@ int main(int argc, char* argv[]) {
             
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
+                    fileManager.writeToJournal("[SAUVEGARDE] Sauvegarde des donnéesde la bibliothèque." ); //Fonction de journalisme
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
