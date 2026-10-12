@@ -34,8 +34,14 @@ Book::Book(const string& title, const string& author, const string& isbn) {
 
     };
     string Book::toString() const {
+        string available;
+        if (isAvailable) {
+            available = "Oui";
+        } else {
+            available = "Non";
+        }
         return "Titre: " + title + "\nAuteur: " + author +
-             "\nISBN: " + isbn;
+             "\nISBN: " + isbn + "\nDisponible: " + available;
     };
     string Book::toFileFormat() const {
         return title + "|" + author +
@@ -51,4 +57,9 @@ Book::Book(const string& title, const string& author, const string& isbn) {
         getline(ss, availableStr, '|');
         getline(ss, borrowerId, '|');
         this->isAvailable = availableStr == "1";
+
+        borrowerId.erase(
+            remove(borrowerId.begin(), borrowerId.end(), '\r'),
+            borrowerId.end()
+        );
     };

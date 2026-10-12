@@ -98,11 +98,11 @@ void Library::addUser(const User& user) {
 
 // Find user by ID
 User* Library::findUserById(const string& userId) {
+    
     auto it = find_if(users.begin(), users.end(),
         [&userId](const unique_ptr<User>& user) {
             return user->getUserId() == userId;
         });
-    
     return (it != users.end()) ? it->get() : nullptr;
 }
 
@@ -158,7 +158,7 @@ void Library::displayAllBooks() {
         cout << "\nLivre " << (i + 1) << " :\n";
         cout << books[i]->toString() << "\n";       
         if (!books[i]->getAvailability()) {
-            
+            cout << "Propriétaire actuel: " << findUserById(books[i]->getBorrowerId())->getName() << "\n";
         }
         cout << "-------------------------\n";
     }
