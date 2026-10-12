@@ -172,11 +172,16 @@ int main(int argc, char* argv[]) {
                 break;
             }
             
-            case 5: // Display All Books
-                library.displayAllBooks();
+            case 5: {// Display All Books
+                string filtre = getInput("Entrez le type de filtre souhaité (1: Par titre 2: Par autheur 3: Aucun)\n");
+                while (filtre != "1" && filtre != "2" && filtre != "3") {
+                    cout << "Entrée invalide.\n";
+                    filtre = getInput("Entrez le type de filtre souhaité (1: Par titre 2: Par autheur 3: Aucun)\n");
+                }
+                library.displayAllBooks(filtre);
                 pauseForInput();
                 break;
-            
+            }
             case 6: // Display Available Books
                 library.displayAvailableBooks();
                 pauseForInput();

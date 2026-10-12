@@ -28,10 +28,12 @@ Book::Book(const string& title, const string& author, const string& isbn) {
 
     // Methods
     void Book::checkOut(const string& borrowerId) {
-
+        setAvailability(false);
+        setBorrowerId(borrowerId);
     };
     void Book::returnBook() {
-
+        setAvailability(true);
+        setBorrowerId("");
     };
     string Book::toString() const {
         string available;

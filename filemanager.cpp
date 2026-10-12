@@ -11,7 +11,13 @@ FileManager::FileManager(const string& booksFile, const string& usersFile, const
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
-    return saveBooksToFile(library) && saveUsersToFile(library);
+    int error;
+    if (booksFileName != "" && usersFileName != "") {
+        error = saveBooksToFile(library) && saveUsersToFile(library);
+    } else {
+        cout << "Fichier(s) de sauvegarde manquant(s). Sauvegarde annulée.\n";
+    }
+    return error;
 }
 
 // Load all library data
@@ -39,17 +45,21 @@ bool FileManager::saveBooksToFile(Library& library) {
 }
 
 bool FileManager::writeToJournal(string entry) {
-    ofstream file(journalFileName);
+    ofstream file(journalFileName, ios::app);
 
-    cout << "Writing journal to: " << journalFileName << endl;
-    if (!file.is_open()) {
-        cout << "Erreur : Impossible d'ouvrir " << journalFileName << " en écriture.\n";
-        return false;
+    if (journalFileName != "") {
+
+        if (!file.is_open()) {
+            cout << "Erreur : Impossible d'ouvrir " << journalFileName << " en écriture.\n";
+            return false;
+        }
+
+        file << entry + "\n";
+
+        file.close();
+        return true;
     }
-    file << entry + "\n";
     
-    file.close();
-    return true;
 }
 
 // Save users to file

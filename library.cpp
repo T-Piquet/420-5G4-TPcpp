@@ -147,18 +147,30 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
+void Library::displayAllBooks(const string& filtre) {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+    auto filteredBooks = getAllBooks();
+    if (filtre == "1") {
+        std::sort(filteredBooks.begin(), filteredBooks.end(), [](Book* b1, Book* b2) {
+            return b1->getTitle() < b2->getTitle();
+        });
+    } else if (filtre == "2") {
+        std::sort(filteredBooks.begin(), filteredBooks.end(), [](Book* b1, Book* b2) {
+            return b1->getAuthor() < b2->getAuthor();
+            
+        });
+    }
+    
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < filteredBooks.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";       
-        if (!books[i]->getAvailability()) {
-            cout << "Propriétaire actuel: " << findUserById(books[i]->getBorrowerId())->getName() << "\n";
+        cout << filteredBooks[i]->toString() << "\n";       
+        if (!filteredBooks[i]->getAvailability()) {
+            cout << "Propriétaire actuel: " << findUserById(filteredBooks[i]->getBorrowerId())->getName() << "\n";
         }
         cout << "-------------------------\n";
     }

@@ -1,1 +1,5 @@
-[EMPRUNT] |a|a|1234||Marc Leroy|USR006|9782070380848,1234
+[SAUVEGARDE] Sauvegarde des donnéesde la bibliothèque.
+[AJOUT LIVRE] aaa|aaa|34|1|
+[SAUVEGARDE] Sauvegarde des donnéesde la bibliothèque.
+[EMPRUNT] aaa|aaa|34|0|USR001|Marie Dubois|USR001|9782253096337,34
+[RETOUR] aaa|aaa|34|1|
