@@ -9,6 +9,9 @@
 
 using namespace std;
 
+//critere de filtre
+enum class SortOrder { None, Title, Author };
+
 class Library {
 private:
     vector<unique_ptr<Book>> books;
@@ -37,9 +40,15 @@ public:
     bool checkOutBook(const string& isbn, const string& userId);
     bool returnBook(const string& isbn);
     
+    // Borrower helpers
+    string getBorrowerName(const Book& book) const;
+    string formatBook(const Book& book) const;
+    string toLogFormat(const Book& book) const;
+
     // Display methods
-    void displayAllBooks();
-    void displayAvailableBooks();
+    void sortBooks(vector<Book*>& list, SortOrder order);
+    void displayAllBooks(SortOrder order = SortOrder::None);
+    void displayAvailableBooks(SortOrder order = SortOrder::None);
     void displayAllUsers();
     
     // Statistics
