@@ -147,34 +147,59 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
-    if (books.empty()) {
+void Library::displayAllBooks(int triOption) {
+    vector<Book*> livres = getAllBooks(); // copie de la liste des livres
+
+    if (livres.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    trierLivres(livres, triOption); // trier selon l'option choisie
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < livres.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << livres[i]->toString() << "\n";
         cout << "-------------------------\n";
     }
 }
 
 // Display available books
-void Library::displayAvailableBooks() {
+void Library::displayAvailableBooks(int triOption) {
     auto available = getAvailableBooks();
     
     if (available.empty()) {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+    trierLivres(available, triOption); // trier selon l'option choisie
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
         cout << available[i]->toString() << "\n";
         cout << "---------------------------\n";
+    }
+}
+
+void Library::trierLivres(vector<Book*>& livres, int triOption) {
+    switch (triOption) {
+        case 1: // Tri par titre
+            sort(livres.begin(), livres.end(),
+                [](Book* a, Book* b) {
+                    return a->getTitle() < b->getTitle();
+                });
+            break;
+        case 2: // Tri par auteur
+            sort(livres.begin(), livres.end(),
+                [](Book* a, Book* b) {
+                    return a->getAuthor() < b->getAuthor();
+                });
+            break;
+        default:
+            break; // pas de tri par defaut
     }
 }
 
@@ -191,6 +216,38 @@ void Library::displayAllUsers() {
         cout << users[i]->toString() << "\n";
         cout << "------------------------------\n";
     }
+}
+
+// Retire les tirets et les espaces d'un ISBN (ex : "978-2-07-038001-5" → "9782070380015")
+string nettoyerISBN(const string& isbn) {
+    string resultat = "";
+    for (char caractere : isbn) {
+        if (caractere != '-' && caractere != ' ') {
+            resultat += caractere;
+        }
+    }
+    return resultat;
+}
+
+Book* Library::findDuplicate(const string& title, const string& author, const string& isbn) {
+    string cleanedISBN = nettoyerISBN(isbn);
+    string lowerTitle = title;
+    string lowerAuthor = author;
+    transform(lowerTitle.begin(), lowerTitle.end(), lowerTitle.begin(), ::tolower);
+    transform(lowerAuthor.begin(), lowerAuthor.end(), lowerAuthor.begin(), ::tolower);
+
+    for (auto& book : books) {
+        string bookISBN = nettoyerISBN(book->getISBN());
+        string bookTitle = book->getTitle();
+        string bookAuthor = book->getAuthor();
+        transform(bookTitle.begin(), bookTitle.end(), bookTitle.begin(), ::tolower);
+        transform(bookAuthor.begin(), bookAuthor.end(), bookAuthor.begin(), ::tolower);
+
+        if (bookISBN == cleanedISBN || (bookTitle == lowerTitle && bookAuthor == lowerAuthor)) {
+            return book.get(); // Retourne le livre en double trouvé
+        }
+    }
+    return nullptr; // Aucun doublon trouvé
 }
 
 // Statistics

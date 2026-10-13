@@ -38,9 +38,14 @@ public:
     bool returnBook(const string& isbn);
     
     // Display methods
-    void displayAllBooks();
-    void displayAvailableBooks();
+    void displayAllBooks(int triOption = 0); // 0: No sort, 1: Sort by title, 2: Sort by author
+    void displayAvailableBooks(int triOption = 0); // 0: No sort, 1: Sort by title, 2: Sort by author
+    void trierLivres(vector<Book*>& livres, int triOption); // 0: No sort, 1: Sort by title, 2: Sort by author
     void displayAllUsers();
+    
+    // Trouver les doublons de livres (même ISBN ou même titre + auteur)
+    // même ISBN (sans tirets/espaces) OU même titre + auteur (sans majuscules)
+    Book* findDuplicate(const string& title, const string& author, const string& isbn);
     
     // Statistics
     int getTotalBooks() const;

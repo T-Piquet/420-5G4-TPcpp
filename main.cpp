@@ -45,6 +45,30 @@ string getInput(const string& prompt) {
     return input;
 }
 
+// Demande à l'utilisateur comment trier l'affichage des livres.
+// Retourne 1 (par titre), 2 (par auteur) ou 0 (aucun tri).
+int demanderTri() {
+    cout << "\n--- OPTIONS DE TRI ---\n";
+    cout << "1. Trier par titre (ordre alphabétique)\n";
+    cout << "2. Trier par auteur (ordre alphabétique)\n";
+    cout << "3. Aucun tri \n";
+    string choix = getInput("Comment voulez-vous trier les livres ? ");
+
+    int option = 0;   // par défaut : aucun tri
+
+    if (choix == "1") {
+        option = 1;
+        cout << "Tri par titre appliqué.\n";
+    } else if (choix == "2") {
+        option = 2;
+        cout << "Tri par auteur appliqué.\n";
+    } else if (choix != "3") {
+        cout << "Choix invalide : les livres seront affichés sans tri.\n";
+    }
+
+    return option;
+}
+
 void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
@@ -70,6 +94,7 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string journalFile; 
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +103,11 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        journalFile = (filesystem::path(dataDir) / "journal.txt").string(); 
     }
 
     Library library;
-    FileManager fileManager(booksFile, usersFile);
+    FileManager fileManager(booksFile, usersFile, journalFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -107,12 +133,21 @@ int main(int argc, char* argv[]) {
                 string title = getInput("Entrez le titre du livre : ");
                 string author = getInput("Entrez l'auteur du livre : ");
                 string isbn = getInput("Entrez l'ISBN du livre : ");
+
+                Book* doublon = library.findDuplicate(title, author, isbn);
                 
                 if (library.findBookByISBN(isbn)) {
                     cout << "Erreur : Un livre avec l'ISBN " << isbn << " existe déjà.\n";
+                    fileManager.logOperation("ERREUR", "Tentative d'ajout d'un livre avec un ISBN existant : " + isbn);
+                }else if (doublon != nullptr) {
+                    cout << "Erreur : Ce livre existe déjà dans la bibliothèque :\n"
+                        << "  \"" << doublon->getTitle() << "\" de " << doublon->getAuthor()
+                        << " (ISBN " << doublon->getISBN() << ")\n";
+                    fileManager.logOperation("ERREUR", "Tentative d'ajout d'un doublon : " + title + "|" + author + "|" + isbn);
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    fileManager.logOperation("AJOUT LIVRE", "Livre ajouté : " + newBook.toFileFormat());
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,11 +156,20 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
+
+                // On copie les infos du livre AVANT de le supprimer
+                string description = "";
+                Book* livre = library.findBookByISBN(isbn);
+                if (livre != nullptr) {
+                    description = livre->toFileFormat();
+                }
+
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    fileManager.logOperation("SUPPRESSION LIVRE", description);   // texte copié : sans danger
                 } else {
                     cout << "Livre non trouvé.\n";
+                    fileManager.logOperation("ERREUR", "Tentative de suppression d'un livre non trouvé : " + isbn);
                 }
                 pauseForInput();
                 break;
@@ -137,6 +181,7 @@ int main(int argc, char* argv[]) {
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé avec ce titre.\n";
+                    fileManager.logOperation("RECHERCHE LIVRE", "Aucun livre trouvé avec le titre : " + title);
                 } else {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
@@ -144,6 +189,7 @@ int main(int argc, char* argv[]) {
                         cout << results[i]->toString() << "\n";
                         cout << "-----------------------------\n";
                     }
+                    fileManager.logOperation("RECHERCHE LIVRE", "Livre(s) trouvé(s) avec le titre : " + title);
                 }
                 pauseForInput();
                 break;
@@ -155,6 +201,7 @@ int main(int argc, char* argv[]) {
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé de cet auteur.\n";
+                    fileManager.logOperation("RECHERCHE LIVRE", "Aucun livre trouvé de l'auteur : " + author);
                 } else {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
@@ -162,20 +209,47 @@ int main(int argc, char* argv[]) {
                         cout << results[i]->toString() << "\n";
                         cout << "-----------------------------\n";
                     }
+                    fileManager.logOperation("RECHERCHE LIVRE", "Livre(s) trouvé(s) de l'auteur : " + author);
                 }
                 pauseForInput();
                 break;
             }
             
-            case 5: // Display All Books
-                library.displayAllBooks();
+            case 5: { // Display All Books
+                int triOption = demanderTri();
+                library.displayAllBooks(triOption);
+
+                string description = "Affichage de tous les livres ";
+                if (triOption == 1) {
+                    description += "triés par titre.";
+                } else if (triOption == 2) {
+                    description += "triés par auteur.";
+                } else {
+                    description += "sans tri.";
+                }
+                fileManager.logOperation("AFFICHAGE LIVRE", description);
+
                 pauseForInput();
                 break;
-            
-            case 6: // Display Available Books
-                library.displayAvailableBooks();
+            }
+
+            case 6: { // Display Available Books
+                int triOption = demanderTri();
+                library.displayAvailableBooks(triOption);
+
+                string description = "Affichage des livres disponibles ";
+                if (triOption == 1) {
+                    description += "triés par titre.";
+                } else if (triOption == 2) {
+                    description += "triés par auteur.";
+                } else {
+                    description += "sans tri.";
+                }
+                fileManager.logOperation("AFFICHAGE LIVRE", description);
+
                 pauseForInput();
                 break;
+            }
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
@@ -183,10 +257,12 @@ int main(int argc, char* argv[]) {
                 
                 if (library.findUserById(userId)) {
                     cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
+                    fileManager.logOperation("ERREUR", "Tentative d'ajout d'un utilisateur existant : " + userId);
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
                     cout << "Utilisateur ajouté avec succès !\n";
+                    fileManager.logOperation("AJOUT UTILISATEUR", "Utilisateur ajouté : " + name);
                 }
                 pauseForInput();
                 break;
@@ -194,6 +270,7 @@ int main(int argc, char* argv[]) {
             
             case 8: // Display All Users
                 library.displayAllUsers();
+                fileManager.logOperation("AFFICHAGE UTILISATEUR", "Affichage de tous les utilisateurs.");
                 pauseForInput();
                 break;
             
@@ -203,8 +280,10 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    fileManager.logOperation("EMPRUNT LIVRE", "Livre emprunté : " + library.findBookByISBN(isbn)->toFileFormat());
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
+                    fileManager.logOperation("ERREUR", "Tentative d'emprunt d'un livre non disponible : " + isbn);
                 }
                 pauseForInput();
                 break;
@@ -215,8 +294,10 @@ int main(int argc, char* argv[]) {
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    fileManager.logOperation("RETOUR LIVRE", "Livre retourné : " + library.findBookByISBN(isbn)->toFileFormat());
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
+                    fileManager.logOperation("ERREUR", "Tentative de retour d'un livre non emprunté : " + isbn);
                 }
                 pauseForInput();
                 break;
@@ -228,6 +309,7 @@ int main(int argc, char* argv[]) {
                 cout << "Livres Disponibles : " << library.getAvailableBookCount() << "\n";
                 cout << "Livres Empruntés : " << library.getCheckedOutBookCount() << "\n";
                 cout << "Total des Utilisateurs : " << library.getAllUsers().size() << "\n";
+                fileManager.logOperation("STATISTIQUES LIVRE", "Affichage des statistiques de la bibliothèque.");
                 pauseForInput();
                 break;
             }
@@ -235,8 +317,10 @@ int main(int argc, char* argv[]) {
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
+                    fileManager.logOperation("SAUVEGARDE LIVRE", "Données de la bibliothèque sauvegardées.");
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
+                    fileManager.logOperation("ERREUR", "Échec de la sauvegarde des données de la bibliothèque.");
                 }
                 pauseForInput();
                 break;
@@ -244,19 +328,27 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                fileManager.logOperation("BACKUP LIVRE", "Sauvegarde de la bibliothèque créée.");
                 pauseForInput();
                 break;
             }
             
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
-                fileManager.saveLibraryData(library);
+                if (fileManager.saveLibraryData(library)) {
+                    cout << "Données sauvegardées avec succès !\n";
+                    fileManager.logOperation("SAUVEGARDE LIVRE", "Données de la bibliothèque sauvegardées avant fermeture.");
+                } else {
+                    cout << "Erreur lors de la sauvegarde des données.\n";
+                    fileManager.logOperation("ERREUR", "Échec de la sauvegarde des données de la bibliothèque.");
+                }
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
                 break;
             
             default:
                 cout << "Choix invalide. Veuillez réessayer.\n";
+                fileManager.logOperation("ERREUR", "Choix invalide dans le menu principal.");
                 pauseForInput();
                 break;
         }
