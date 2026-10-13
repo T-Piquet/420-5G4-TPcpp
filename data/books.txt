@@ -13,7 +13,6 @@ Bel-Ami|Guy de Maupassant|9782253005070|0|USR005
 Le Malade imaginaire|Molière|9782070380763|1|
 Phèdre|Jean Racine|9782070380800|1|
 Le Cid|Pierre Corneille|9782070380848|0|USR006
-Tartuffe|Molière|9782070380770|1|
 Dom Juan|Molière|9782070380787|1|
 Andromaque|Jean Racine|9782070380817|0|USR007
 Le Barbier de Séville|Beaumarchais|9782070380855|1|
@@ -39,3 +38,5 @@ Maximes|La Rochefoucauld|9782070380987|1|
 Pensées|Blaise Pascal|9782070380994|0|USR014
 Lettres persanes|Montesquieu|9782070381001|1|
 De l'esprit des lois|Montesquieu|9782070381018|1|
+test|test2|9782070380770|1|
+test2|test2|123|0|1233

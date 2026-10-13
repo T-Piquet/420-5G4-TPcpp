@@ -2,15 +2,19 @@
 #include <algorithm>
 
 #include "library.h"
-
+#include "logger.h"
 using namespace std;
 
 // Constructor
 Library::Library() {}
 
 // Add book to library
-void Library::addBook(const Book& book) {
+void Library::addBook(const Book& book, bool addToLog) {
     books.push_back(make_unique<Book>(book));
+
+    if (addToLog) {
+        ecrireJournal("[AJOUT LIVRE] " + book.toFileFormat());
+    }
 }
 
 // Remove book from library
@@ -19,11 +23,18 @@ bool Library::removeBook(const string& isbn) {
         [&isbn](const unique_ptr<Book>& book) {
             return book->getISBN() == isbn;
         });
-    
+
     if (it != books.end()) {
+        string result = (*it)->getTitle() +
+                        "|" + (*it)->getAuthor() +
+                        "|" + (*it)->getISBN();
+
+        ecrireJournal( " [SUPPRESSION LIVRE] " + result);
+
         books.erase(it);
         return true;
     }
+
     return false;
 }
 
@@ -51,6 +62,7 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+
     return results;
 }
 
@@ -119,30 +131,51 @@ vector<User*> Library::getAllUsers() {
 bool Library::checkOutBook(const string& isbn, const string& userId) {
     Book* book = findBookByISBN(isbn);
     User* user = findUserById(userId);
-    
+
     if (book && user && book->getAvailability()) {
         book->checkOut(user->getUserId());
         user->borrowBook(isbn);
+
+        string result = book->getTitle() +
+                        "|" + book->getAuthor() +
+                        "|" + book->getISBN() +
+                        "|0|" + user->getName();
+
+        ecrireJournal( " [EMPRUNT] " + result);
+
         return true;
     }
+
     return false;
 }
 
 // Return book
 bool Library::returnBook(const string& isbn) {
     Book* book = findBookByISBN(isbn);
-    
+
     if (book && !book->getAvailability()) {
-        // Find the user who borrowed this book
+        string userName = "";
+
         for (auto& user : users) {
             if (user->hasBorrowedBook(isbn)) {
+                userName = user->getName();
                 user->returnBook(isbn);
                 break;
             }
         }
+
         book->returnBook();
+
+        string result = book->getTitle() +
+                        "|" + book->getAuthor() +
+                        "|" + book->getISBN() +
+                        "|1|" + userName;
+
+        ecrireJournal( " [RETOUR] " + result);
+
         return true;
     }
+
     return false;
 }
 
@@ -152,11 +185,26 @@ void Library::displayAllBooks() {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    vector<Book*> sortedBooks;
+
+    for (auto &&book : books)
+    {
+        sortedBooks.push_back(book.get());
+    }
+    sort(sortedBooks.begin(), sortedBooks.end(),
+    [](Book* a, Book* b) {
+        if (a->getTitle() == b->getTitle()) {
+            return a->getAuthor() < b->getAuthor();
+        }
+
+        return a->getTitle() < b->getTitle();
+    });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < sortedBooks.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << sortedBooks[i]->toString(*this) << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -173,7 +221,7 @@ void Library::displayAvailableBooks() {
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << available[i]->toString(*this) << "\n";
         cout << "---------------------------\n";
     }
 }

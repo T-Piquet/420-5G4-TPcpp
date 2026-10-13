@@ -11,6 +11,11 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Sauvegarde impossible : aucun répertoire de données spécifié.\n";
+        return false;
+    }
+
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -69,7 +74,7 @@ bool FileManager::loadBooksFromFile(Library& library) {
         if (!line.empty()) {
             Book book;
             book.fromFileFormat(line);
-            library.addBook(book);
+            library.addBook(book, false);
             count++;
         }
     }
