@@ -1,17 +1,32 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <ctime> //Ajout
 #include "filemanager.h"
 
 using namespace std;
 
 // Constructor
 FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+    : booksFileName(booksFile), usersFileName(usersFile) {
+        logFileName = (filesystem::path(booksFile).parent_path() / "journal.log").string(); //modifié le fichier est dans data
+    }
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
-    return saveBooksToFile(library) && saveUsersToFile(library);
+    bool succes = false;
+
+    if (booksFileName.empty() || usersFileName.empty()) { // modifié pour écrire un message explicite sans data
+        cout << "Sauvegarde impossible : aucun dossier de données n'a été indiqué au lancement.\n";
+    } else {
+        bool booksSaved = saveBooksToFile(library);
+        bool usersSaved = saveUsersToFile(library);
+        if (booksSaved && usersSaved) {
+            succes = true;
+        }
+    }
+
+    return succes;
 }
 
 // Load all library data
@@ -120,4 +135,21 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+//Ajout
+//journal d'activités
+void FileManager::logActivity(const string& action, const string& details) {
+    ofstream file(logFileName, ios::app);
+
+    if (file.is_open()) {
+        time_t now = time(nullptr);
+        char dateTime[25];
+        strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+        file << dateTime << " - [" << action << "] " << details << "\n";
+        file.close();
+    } else {
+        cout << "Erreur : Affichage invalide " << logFileName << ".\n";
+    }
 }

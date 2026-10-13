@@ -27,18 +27,23 @@ public:
     vector<Book*> searchBooksByAuthor(const string& author);
     vector<Book*> getAvailableBooks();
     vector<Book*> getAllBooks();
+
+    // Tri
+    void triBooksByTitle(vector<Book*>& list);
+    void triBooksByAuthor(vector<Book*>& list);
     
     // User management
     void addUser(const User& user);
     User* findUserById(const string& userId);
     vector<User*> getAllUsers();
+    string getUserName(const string& userId); //ajoutée
     
     // Library operations
     bool checkOutBook(const string& isbn, const string& userId);
     bool returnBook(const string& isbn);
     
     // Display methods
-    void displayAllBooks();
+    void displayAllBooks(int optionTri = 0);
     void displayAvailableBooks();
     void displayAllUsers();
     
