@@ -33,6 +33,8 @@ void displayMenu() {
     cout << "11. Statistiques de la Bibliothèque\n";
     cout << "12. Sauvegarder les Données\n";
     cout << "13. Créer une Sauvegarde\n";
+    cout << "14. Exporter les données dans un fichier CSV\n";
+    cout << "15. Importer les données d'un fichier CSV\n";
     cout << "0.  Quitter\n";
     cout << "======================================================\n";
     cout << "Entrez votre choix : ";
@@ -51,6 +53,7 @@ void printUsage(const char* programName) {
 
 int main(int argc, char* argv[]) {
     string dataDir;
+    //static int idUser = 0;
 
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
@@ -70,6 +73,9 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string booksCSVFile;
+    string usersCSVFile;
+    string actionsFile;
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,17 +84,24 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        booksCSVFile = (filesystem::path(dataDir) / "bookscsv.csv").string();
+        usersCSVFile = (filesystem::path(dataDir) / "userscsv.csv").string();
+        actionsFile = (filesystem::path(dataDir) / "journal.txt").string();
     }
 
     Library library;
-    FileManager fileManager(booksFile, usersFile);
+    FileManager fileManager(booksFile, usersFile, booksCSVFile, usersCSVFile, actionsFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
+    cout << dataDir << " : chemin des donnees\n";
+    cout << booksFile << " : chemin des donnees livres\n";
+    cout << usersFile << " : chemin des donnees utilisateurs\n";
     fileManager.loadLibraryData(library);
     
     int choice;
     bool running = true;
+    string journalLine;
     
     while (running) {
         displayMenu();
@@ -113,7 +126,9 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
-                    cout << "Livre ajouté avec succès !\n";
+                    journalLine = "[AJOUT LIVRE] " + newBook.toFileFormat();
+                    fileManager.saveActionToFile(journalLine);
+                    cout << "Livre ajouté avec succès ! (Sauvegardez avec no 12)\n";
                 }
                 pauseForInput();
                 break;
@@ -121,12 +136,20 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
+                string livreSupp = "";
+                Book* bookFound = library.findBookByISBN(isbn);
                 
-                if (library.removeBook(isbn)) {
-                    cout << "Livre supprimé avec succès !\n";
+                if (bookFound != nullptr) {
+                    livreSupp = library.findBookByISBN(isbn)->toFileFormat();
+                    
+                    if(library.removeBook(isbn)) {
+                        cout << "Livre supprimé avec succès ! (Sauvegardez avec no 12)\n";
+                    }
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
+                journalLine = "[RETRAIT LIVRE] " + livreSupp;
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             }
@@ -145,6 +168,8 @@ int main(int argc, char* argv[]) {
                         cout << "-----------------------------\n";
                     }
                 }
+                journalLine = "[RECHERCHE TITRE] " + title;
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             }
@@ -163,6 +188,8 @@ int main(int argc, char* argv[]) {
                         cout << "-----------------------------\n";
                     }
                 }
+                journalLine = "[RECHERCHE AUTEUR] " + author;
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             }
@@ -170,23 +197,40 @@ int main(int argc, char* argv[]) {
             case 5: // Display All Books
                 library.displayAllBooks();
                 pauseForInput();
+                journalLine = "[AFFICHAGE LIVRES]";
+                fileManager.saveActionToFile(journalLine);
                 break;
             
             case 6: // Display Available Books
                 library.displayAvailableBooks();
+                journalLine = "[AFFICHAGE LIVRES DISPOS]";
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
+                string userId;
+                // string userId = getInput("Entrez l'ID de l'utilisateur : ");
+                int nbUsers = library.getAllUsers().size() + 1;
+                if (nbUsers <= 9) {
+                    userId = "USR00" + to_string(nbUsers);
+                } else if (nbUsers <= 99) {
+                    userId = "USR0" + to_string(nbUsers);
+                } else {
+                    userId = "USR" + to_string(nbUsers);
+                }
+                
+                cout << "ID de l'utilisateur : " << userId << "\n";
                 
                 if (library.findUserById(userId)) {
                     cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
-                    cout << "Utilisateur ajouté avec succès !\n";
+                    journalLine = "[AJOUT UTILISATEUR] " + newUser.toFileFormat();
+                    fileManager.saveActionToFile(journalLine);
+                    cout << "Utilisateur ajouté avec succès ! (Sauvegardez avec no 12)\n";
                 }
                 pauseForInput();
                 break;
@@ -194,16 +238,33 @@ int main(int argc, char* argv[]) {
             
             case 8: // Display All Users
                 library.displayAllUsers();
+                journalLine = "[AFFICHAGE UTILISATEURS]";
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             
             case 9: { // Check Out Book
                 string isbn = getInput("Entrez l'ISBN du livre à emprunter : ");
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
-                
-                if (library.checkOutBook(isbn, userId)) {
-                    cout << "Livre emprunté avec succès !\n";
-                } else {
+                Book* bookFound = library.findBookByISBN(isbn);
+                User* userFound = library.findUserById(userId);
+                string livreEmp = "";
+                string userEmp =  "";
+               
+                if (bookFound != nullptr && userFound != nullptr) {
+                    livreEmp = library.findBookByISBN(isbn)->toFileFormat();
+                    userEmp = library.findUserById(userId)->toFileFormat();
+
+                    if (library.checkOutBook(isbn, userId)) {
+                        int pos = userEmp.find('|'); // source : (1)
+                        journalLine = "[EMPRUNT LIVRE] " + livreEmp + userEmp.substr(0, pos);
+                        fileManager.saveActionToFile(journalLine);
+                        cout << "Livre emprunté avec succès ! (Sauvegardez avec no 12)\n";
+                    } else {
+                        cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
+                    }
+                }
+                else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
                 pauseForInput();
@@ -212,9 +273,19 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
-                
-                if (library.returnBook(isbn)) {
-                    cout << "Livre retourné avec succès !\n";
+                Book* bookFound = library.findBookByISBN(isbn);
+                string livreRetour = "";
+
+                if (bookFound != nullptr) {
+                    livreRetour = library.findBookByISBN(isbn)->toFileFormat();
+
+                    if (library.returnBook(isbn)) {
+                        journalLine = "[RETOUR LIVRE] " + livreRetour;
+                        fileManager.saveActionToFile(journalLine);
+                        cout << "Livre retourné avec succès ! (Sauvegardez avec no 12)\n";
+                    } else {
+                        cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
+                    }
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
@@ -228,28 +299,69 @@ int main(int argc, char* argv[]) {
                 cout << "Livres Disponibles : " << library.getAvailableBookCount() << "\n";
                 cout << "Livres Empruntés : " << library.getCheckedOutBookCount() << "\n";
                 cout << "Total des Utilisateurs : " << library.getAllUsers().size() << "\n";
+                journalLine = "[IMPRESSION STATS]";
+                fileManager.saveActionToFile(journalLine);
                 pauseForInput();
                 break;
             }
             
             case 12: { // Save Data
-                if (fileManager.saveLibraryData(library)) {
-                    cout << "Données de la bibliothèque sauvegardées avec succès !\n";
+                if (!dataDir.empty()) {
+                    if (fileManager.saveLibraryData(library)) {
+                    journalLine = "[SAUVEGARDER]";
+                    fileManager.saveActionToFile(journalLine);
+                        cout << "Données de la bibliothèque sauvegardées avec succès !\n";
+                    } else {
+                        cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
+                    }
                 } else {
-                    cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
+                    cerr << "Erreur : Les chemins sont vides. Lancez AVEC --datat-dir.\n";
                 }
                 pauseForInput();
                 break;
+                
             }
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                journalLine = "[CREATION SAUVEGARDE]";
+                fileManager.saveActionToFile(journalLine);
+                pauseForInput();
+                break;
+            }
+
+            case 14: { // Save Data to CSV
+                if (!dataDir.empty()) {
+                    if (fileManager.saveLibraryDataToCSV(library)) {
+                        journalLine = "[EXPORT EN CSV]";
+                        fileManager.saveActionToFile(journalLine);
+                        cout << "Données de la bibliothèque sauvegardées en CSV avec succès !\n";
+                    } else {
+                        cout << "Erreur lors de la sauvegarde des données de la bibliothèque en CSV.\n";
+                    }
+                } else {
+                    cerr << "Erreur : Les chemins sont vides. Lancez AVEC --datat-dir.\n";
+                }
+                pauseForInput();
+                break;
+            }
+
+            case 15: { // Get Data from CSV
+                if (fileManager.loadLibraryDataFromCSV(library)) {
+                    journalLine = "[IMPORT EN CSV]";
+                    fileManager.saveActionToFile(journalLine);
+                    cout << "Données du fichier CSV importées avec succès ! Voir avec no 5\n";
+                } else {
+                    cout << "Erreur lors de l'importation des données en CSV.\n";
+                }
                 pauseForInput();
                 break;
             }
             
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
+                journalLine = "[QUITTER]";
+                fileManager.saveActionToFile(journalLine);
                 fileManager.saveLibraryData(library);
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
@@ -264,3 +376,6 @@ int main(int argc, char* argv[]) {
     
     return 0;
 }
+
+// ====== SOURCE(S) ====== 
+// (1) : https://www.geeksforgeeks.org/cpp/substring-in-cpp/#:~:text=Extract%20Substring%20Before%20a%20Character

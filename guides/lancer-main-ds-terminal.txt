@@ -1,0 +1,4 @@
+$ cd build
+$ make
+$ ls
+$ ./bibliotheque --data-dir ../data (voir enonce tp)

@@ -71,6 +71,16 @@ string User::toFileFormat() const {
     return result;
 }
 
+// Format for CSV file storage
+string User::toCSVFileFormat() const {
+    string result = "\"" + name + "\",\"" + userId + "\",";
+    for (size_t i = 0; i < borrowedBooks.size(); ++i) {
+        result += "\"" + borrowedBooks[i] + "\"";
+        if (i < borrowedBooks.size() - 1) result += "|";
+    }
+    return result;
+}
+
 // Parse from file format
 void User::fromFileFormat(const string& line) {
     stringstream ss(line);
@@ -90,4 +100,34 @@ void User::fromFileFormat(const string& line) {
             borrowedBooks.push_back(isbn);
         }
     }
+}
+// Parse from CSV file format
+void User::fromCSVFileFormat(const string& line) {
+    stringstream ss(line);
+    string elem;
+    int cmptr = 0;
+
+    while (getline(ss, elem, ',')) {
+        cmptr++;
+        string elemCleaned = elem.substr(1, (elem.length() - 2));
+        // source : (3)
+        switch (cmptr) {
+            case 1 : 
+                this->name = elemCleaned;
+                break;
+            case 2 :
+                this->userId = elemCleaned;
+                    break;
+            default :
+                borrowedBooks.clear();
+                if (elem != "\"\"") {
+                    stringstream booksSs(elem);
+                    string isbn;
+                    while (getline(booksSs, isbn, '|')) {
+                        borrowedBooks.push_back(isbn);
+                    }
+                }
+                    break;
+        }
+    } // source : (2)
 }
