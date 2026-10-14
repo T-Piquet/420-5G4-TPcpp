@@ -22,6 +22,7 @@ public:
     // Book management
     void addBook(const Book& book);
     bool removeBook(const string& isbn);
+    void displayBookAvecEmprunteur(const Book& book);
     Book* findBookByISBN(const string& isbn);
     vector<Book*> searchBooksByTitle(const string& title);
     vector<Book*> searchBooksByAuthor(const string& author);

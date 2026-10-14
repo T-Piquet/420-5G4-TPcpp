@@ -2,11 +2,45 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <fstream>
+#include <chrono>
 
 #include "library.h"
 #include "filemanager.h"
 
 using namespace std;
+
+void journaliser(const string& action, const Book& book,
+                 const string& nomEmprunteur = "") {
+    ofstream fichier("journal.txt", ios::app);
+
+    if (!fichier.is_open()) {
+        cerr << "Erreur : impossible d'ouvrir le journal.\n";
+        return;
+    }
+
+    // Récupérer la date et l'heure actuelles
+    auto maintenant = chrono::system_clock::now();
+    time_t date = chrono::system_clock::to_time_t(maintenant);
+    tm* dateLocale = localtime(&date);
+
+    if (dateLocale == nullptr) {
+        cerr << "Erreur : impossible de récupérer la date.\n";
+        return;
+    }
+
+    fichier << put_time(dateLocale, "%Y-%m-%d %H:%M:%S")
+            << " - [" << action << "] "
+            << book.getTitle() << "|"
+            << book.getAuthor() << "|"
+            << book.getISBN() << "|"
+            << (book.getAvailability() ? "1" : "0") << "|"
+            << nomEmprunteur << "\n";
+
+    if (!fichier) {
+        cerr << "Erreur : impossible d'écrire dans le journal.\n";
+    }
+}
 
 void clearScreen() {
     system("cls || clear");
@@ -51,6 +85,13 @@ void printUsage(const char* programName) {
 
 int main(int argc, char* argv[]) {
     string dataDir;
+
+    // Créer le journal s'il n'existe pas, sans effacer son contenu
+    ofstream fichier("journal.txt", ios::app);
+    if (!fichier.is_open()) {
+        cerr << "Erreur : impossible de créer ou d'ouvrir le journal.\n";
+    }
+
 
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
@@ -113,6 +154,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    journaliser("AJOUT LIVRE", newBook);
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,12 +163,32 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
-                if (library.removeBook(isbn)) {
-                    cout << "Livre supprimé avec succès !\n";
+                Book* book = library.findBookByISBN(isbn);
+
+                if (book != nullptr) {
+                    // Copier les données avant la suppression sinon core dumped
+                    Book copie = *book;
+                    string nomEmprunteur;
+
+                    if (!copie.getAvailability()) {
+                        User* utilisateur = library.findUserById(copie.getBorrowerId());
+
+                        if (utilisateur != nullptr) {
+                            nomEmprunteur = utilisateur->getName();
+                        } else {
+                            nomEmprunteur = "Utilisateur introuvable";
+                        }
+                    }
+
+                    if (library.removeBook(isbn)) {
+                        // Utiliser la copie, car book n'est plus valide
+                        journaliser("SUPPRESSION LIVRE", copie, nomEmprunteur);
+                        cout << "Livre supprimé avec succès !\n";
+                    }
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
+
                 pauseForInput();
                 break;
             }
@@ -141,7 +203,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        library.displayBookAvecEmprunteur(*results[i]);
                         cout << "-----------------------------\n";
                     }
                 }
@@ -159,7 +221,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        library.displayBookAvecEmprunteur(*results[i]);
                         cout << "-----------------------------\n";
                     }
                 }
@@ -202,6 +264,7 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    journaliser("EMPRUNT LIVRE", *library.findBookByISBN(isbn), userId);
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -214,6 +277,7 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
                 
                 if (library.returnBook(isbn)) {
+                    journaliser("RETOUR LIVRE", *library.findBookByISBN(isbn));
                     cout << "Livre retourné avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
@@ -241,7 +305,7 @@ int main(int argc, char* argv[]) {
                 pauseForInput();
                 break;
             }
-            
+             
             case 13: { // Create Backup
                 fileManager.createBackup();
                 pauseForInput();
@@ -249,12 +313,18 @@ int main(int argc, char* argv[]) {
             }
             
             case 0: // Exit
-                cout << "Sauvegarde des données avant la fermeture...\n";
-                fileManager.saveLibraryData(library);
-                cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
+                if (fileManager.saveLibraryData(library)) {
+                    cout << "Données sauvegardées avant la fermeture.\n";
+                } else {
+                    cout << "Fermeture sans sauvegarde des données.\n";
+                }
+
+                cout << "Merci d'avoir utilisé le Système de Gestion "
+                    << "de Bibliothèque Personnelle !\n";
+
                 running = false;
                 break;
-            
+
             default:
                 cout << "Choix invalide. Veuillez réessayer.\n";
                 pauseForInput();

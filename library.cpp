@@ -8,6 +8,20 @@ using namespace std;
 // Constructor
 Library::Library() {}
 
+void Library::displayBookAvecEmprunteur(const Book& book) {
+    cout << book.toString() << "\n";
+ 
+    if (!book.getAvailability()) {
+        User* utilisateur = findUserById(book.getBorrowerId());
+
+        if (utilisateur != nullptr) {
+            cout << "Emprunteur: " << utilisateur->getName() << "\n";
+        } else {
+            cout << "Emprunteur: Utilisateur introuvable\n";
+        }
+    }
+}
+
 // Add book to library
 void Library::addBook(const Book& book) {
     books.push_back(make_unique<Book>(book));
@@ -51,6 +65,10 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+
     return results;
 }
 
@@ -68,6 +86,13 @@ vector<Book*> Library::searchBooksByAuthor(const string& author) {
             results.push_back(book.get());
         }
     }
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+    if (a->getAuthor() == b->getAuthor()) {
+        return a->getTitle() < b->getTitle();
+    }
+    return a->getAuthor() < b->getAuthor();
+    });
+
     return results;
 }
 
@@ -79,6 +104,9 @@ vector<Book*> Library::getAvailableBooks() {
             available.push_back(book.get());
         }
     }
+    sort(available.begin(), available.end(), [](const Book* a, const Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
     return available;
 }
 
@@ -88,6 +116,9 @@ vector<Book*> Library::getAllBooks() {
     for (auto& book : books) {
         allBooks.push_back(book.get());
     }
+    sort(allBooks.begin(), allBooks.end(), [](const Book* a, const Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
     return allBooks;
 }
 
@@ -148,15 +179,17 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
-    if (books.empty()) {
+    auto livresTries = getAllBooks();
+
+    if (livresTries.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < livresTries.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        displayBookAvecEmprunteur(*livresTries[i]);
         cout << "-------------------------\n";
     }
 }
@@ -173,7 +206,7 @@ void Library::displayAvailableBooks() {
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        displayBookAvecEmprunteur(*available[i]);
         cout << "---------------------------\n";
     }
 }
