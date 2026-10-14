@@ -2,6 +2,8 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <fstream>
+#include <ctime>
 
 #include "library.h"
 #include "filemanager.h"
@@ -51,6 +53,7 @@ void printUsage(const char* programName) {
 
 int main(int argc, char* argv[]) {
     string dataDir;
+    bool estVide = false;
 
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
@@ -78,6 +81,8 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+    } else {
+        estVide = true;
     }
 
     Library library;
@@ -86,6 +91,8 @@ int main(int argc, char* argv[]) {
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
     fileManager.loadLibraryData(library);
+
+    ofstream journal(filesystem::path(dataDir) / "journal.txt", ios::app);
     
     int choice;
     bool running = true;
@@ -101,6 +108,8 @@ int main(int argc, char* argv[]) {
             continue;
         }
         cin.ignore(); // Clear newline from buffer
+
+        time_t maintenant = time(nullptr);
         
         switch (choice) {
             case 1: { // Add Book
@@ -114,6 +123,8 @@ int main(int argc, char* argv[]) {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
                     cout << "Livre ajouté avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AJOUT LIVRE] " << library.findBookByISBN(isbn)->toFileFormat() << endl;
                 }
                 pauseForInput();
                 break;
@@ -121,9 +132,12 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
+                string livre = library.findBookByISBN(isbn)->toFileFormat();
                 
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [SUPPRESSION LIVRE] " << livre << endl;
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -145,6 +159,8 @@ int main(int argc, char* argv[]) {
                         cout << "-----------------------------\n";
                     }
                 }
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [RECHERCHE LIVRE PAR TITRE] " << title << endl;
                 pauseForInput();
                 break;
             }
@@ -163,30 +179,71 @@ int main(int argc, char* argv[]) {
                         cout << "-----------------------------\n";
                     }
                 }
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [RECHERCHE LIVRE PAR AUTEUR] " << author << endl;
                 pauseForInput();
                 break;
             }
             
             case 5: // Display All Books
                 library.displayAllBooks();
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AFFICHE LIVRES] " << endl;
                 pauseForInput();
                 break;
             
             case 6: // Display Available Books
                 library.displayAvailableBooks();
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AFFICHE LIVRES DISPONIBLES] " << endl;
                 pauseForInput();
                 break;
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
-                
-                if (library.findUserById(userId)) {
-                    cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
+
+                if (library.getAllUsers().size() != 0)
+                {
+                    auto dernierUser = library.getAllUsers().back();
+                    string dernierUserId = dernierUser->getUserId().substr(3);
+                    char userId[4] = {'\0', '\0', '\0', '\0'};
+                    bool max = false;
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        userId[i] = dernierUserId[i];
+                    }
+
+                    if (userId[2] != '9')
+                    {
+                        userId[2]++;
+                    } else if (userId[1] != '9')
+                    {
+                        userId[2] = '0';
+                        userId[1]++;
+                    } else if (userId[0] != '9') {
+                        userId[2] = '0';
+                        userId[1] = '0';
+                        userId[0]++;
+                    } else {
+                        max = true;
+                        cout << "Max utilisateurs atteint";
+                    }
+                    
+                    if (!max)
+                    {
+                        User newUser(name, "USR" + string(userId));
+                        library.addUser(newUser);
+                        cout << "Utilisateur ajouté avec succès !\n";
+                        maintenant = time(nullptr);
+                        journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AJOUT UTILISATEUR] " << newUser.toFileFormat() << endl;
+                    }
                 } else {
-                    User newUser(name, userId);
+                    User newUser(name, "USR001");
                     library.addUser(newUser);
                     cout << "Utilisateur ajouté avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AJOUT UTILISATEUR] " << newUser.toFileFormat() << endl;
                 }
                 pauseForInput();
                 break;
@@ -194,6 +251,8 @@ int main(int argc, char* argv[]) {
             
             case 8: // Display All Users
                 library.displayAllUsers();
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [AFFICHE UTILISATEURS] " << endl;
                 pauseForInput();
                 break;
             
@@ -203,6 +262,8 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [EMPRUNT] " << library.findBookByISBN(isbn)->toFileFormat() << endl;
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -212,9 +273,12 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
+                string livre = library.findBookByISBN(isbn)->toFileFormat();
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [RETOUR] " << livre << endl;
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
@@ -228,6 +292,8 @@ int main(int argc, char* argv[]) {
                 cout << "Livres Disponibles : " << library.getAvailableBookCount() << "\n";
                 cout << "Livres Empruntés : " << library.getCheckedOutBookCount() << "\n";
                 cout << "Total des Utilisateurs : " << library.getAllUsers().size() << "\n";
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [STATISTIQUES] " << endl;
                 pauseForInput();
                 break;
             }
@@ -235,6 +301,8 @@ int main(int argc, char* argv[]) {
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
+                    maintenant = time(nullptr);
+                    journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [ENREGISTRE] " << endl;
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
                 }
@@ -244,15 +312,24 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [SAUVEGARDE] " << endl;
                 pauseForInput();
                 break;
             }
             
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
-                fileManager.saveLibraryData(library);
+                if (!estVide)
+                {
+                    fileManager.saveLibraryData(library);
+                } else {
+                    cout << "Chemin Vide! Sauvegarde des données avant la fermeture annulée.\n";
+                }
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
+                maintenant = time(nullptr);
+                journal << put_time(localtime(&maintenant), "%Y-%m-%d %H:%M:%S") << " - [QUITTER] " << endl;
                 break;
             
             default:
@@ -261,6 +338,6 @@ int main(int argc, char* argv[]) {
                 break;
         }
     }
-    
+
     return 0;
 }

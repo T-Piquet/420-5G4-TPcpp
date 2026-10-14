@@ -10,7 +10,7 @@ Lisa Girard|USR009|9782070360062
 Thomas Blanc|USR010|9782070360086
 Julie Mercier|USR011|9782253005101
 Henri Fabre|USR012|9782070380932
-Sylvie Roux|USR013|9782070380963
+Sylvie Roux|USR013|
 Nicolas Petit|USR014|9782070380994
 Alexandra Dumont|USR015|
 Maxime Fontaine|USR016|
@@ -20,6 +20,7 @@ François Garnier|USR018|
 Julien Moreau|USR020|
 Catherine Leclerc|USR021|
 Antoine Dubois|USR022|
-Nathalie Guerin|USR023|
+Nathalie Guerin|USR023|9782070380970
 Olivier Masson|USR024|
 Valérie Simon|USR025|
+test|USR026|
