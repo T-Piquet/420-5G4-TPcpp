@@ -5,6 +5,7 @@
 
 #include "library.h"
 #include "filemanager.h"
+#include "journal.h"
 
 using namespace std;
 
@@ -33,6 +34,8 @@ void displayMenu() {
     cout << "11. Statistiques de la Bibliothèque\n";
     cout << "12. Sauvegarder les Données\n";
     cout << "13. Créer une Sauvegarde\n";
+    cout << "14. Afficher les Livres Tries\n";
+    cout << "15. Ajouter un Utilisateur avec ID Automatique\n";
     cout << "0.  Quitter\n";
     cout << "======================================================\n";
     cout << "Entrez votre choix : ";
@@ -70,15 +73,28 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
-    if (!dataDir.empty()) {
-        if (!filesystem::is_directory(dataDir)) {
-            cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
-            printUsage(argv[0]);
-            return 1;
-        }
-        booksFile = (filesystem::path(dataDir) / "books.txt").string();
-        usersFile = (filesystem::path(dataDir) / "users.txt").string();
+
+    // Utiliser le repertoire courant si aucun repertoire n'est specifie
+    if (dataDir.empty()) {
+        dataDir = ".";
     }
+
+    // Verifier que le repertoire existe
+    if (!filesystem::is_directory(dataDir)) {
+        cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
+        printUsage(argv[0]);
+        return 1;
+    }
+
+// Definir les chemins des fichiers
+booksFile = (filesystem::path(dataDir) / "books.txt").string();
+usersFile = (filesystem::path(dataDir) / "users.txt").string();
+
+    string journalPath = dataDir.empty()
+        ? "journal.txt"
+        : (filesystem::path(dataDir) / "journal.txt").string();
+
+    Journal journal(journalPath);
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
@@ -114,6 +130,7 @@ int main(int argc, char* argv[]) {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
                     cout << "Livre ajouté avec succès !\n";
+                    journal.enregistrer("AJOUT LIVRE", newBook.toFileFormat());
                 }
                 pauseForInput();
                 break;
@@ -122,8 +139,18 @@ int main(int argc, char* argv[]) {
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
                 
+
+                //Recuperer les informations du livre avant sa suppression
+                Book* book = library.findBookByISBN(isbn);
+                string details = "";
+
+                if (book != nullptr) {
+                    details = book->toFileFormat();
+                }
+
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    journal.enregistrer("SUPPRESSION LIVRE", details);
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -203,6 +230,14 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+
+                    // Recuperer le livre apres l'emprunt
+                    Book* book = library.findBookByISBN(isbn);
+
+                    // Enregistrer l'emprunt dans le journal
+                    if (book != nullptr) {
+                        journal.enregistrer("EMPRUNT", book->toFileFormat());
+                    }
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -215,6 +250,12 @@ int main(int argc, char* argv[]) {
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+
+                    Book* book = library.findBookByISBN(isbn);
+
+                    if (book) {
+                        journal.enregistrer("RETOUR", book->toFileFormat());
+                    }
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
@@ -247,10 +288,51 @@ int main(int argc, char* argv[]) {
                 pauseForInput();
                 break;
             }
-            
+
+            case 14: { // Affichage des livres tries
+                int sortType;
+
+                cout << "\n=== TRI DES LIVRES ===\n";
+                cout << "1. Trier par titre\n";
+                cout << "2. Trier par auteur\n";
+                cout << "Entrez votre choix : ";
+
+                if (!(cin >> sortType)) {
+                    cout << "Choix invalide.\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                } else {
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    library.displaySortedBooks(sortType);
+                }
+
+                pauseForInput();
+                break;
+            }
+
+            case 15: { // Ajouter un utilisateur avec ID automatique
+                string name = getInput("Entrez le nom de l'utilisateur : ");
+
+                string userId = library.generateUserId();
+
+                User newUser(name, userId);
+                library.addUser(newUser);
+
+                cout << "Utilisateur ajouté avec succès !\n";
+                cout << "ID généré automatiquement : " << userId << "\n";
+
+                pauseForInput();
+                break;
+            }
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
-                fileManager.saveLibraryData(library);
+
+                if (fileManager.saveLibraryData(library)) {
+                    cout << "Données sauvegardées avec succès !\n";
+                } else {
+                    cerr << "Erreur : impossible de sauvegarder les données.\n";
+                }
+
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
                 break;

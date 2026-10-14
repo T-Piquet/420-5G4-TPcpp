@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
-
+#include <iomanip>
+#include <sstream>
 #include "library.h"
 
 using namespace std;
@@ -202,3 +203,68 @@ int Library::getAvailableBookCount() const {
         });
 }
 int Library::getCheckedOutBookCount() const { return getTotalBooks() - getAvailableBookCount(); }
+
+//Afficher les livres tries par titre ou par auteur
+void Library::displaySortedBooks(int sortType) {
+    vector<Book*> sortedBooks = getAllBooks();
+
+    if (sortedBooks.empty()) {
+        cout << "Aucun livre dans la bibliotheque.\n";
+        return;
+    }
+
+    if (sortType == 1) {
+        // Tri par titre
+        sort(sortedBooks.begin(), sortedBooks.end(),
+            [](Book* a, Book* b) {
+                return a->getTitle() < b->getTitle();
+            });
+    }
+    else if (sortType == 2) {
+        // Tri par auteur
+        sort(sortedBooks.begin(), sortedBooks.end(),
+            [](Book* a, Book* b) {
+                return a->getAuthor() < b->getAuthor();
+            });
+    }
+    else {
+        cout << "Type de tri invalide.\n";
+        return;
+    }
+
+    cout << "\n=== LIVRES TRIES ===\n";
+
+    for (size_t i = 0; i < sortedBooks.size(); ++i) {
+        cout << "\nLivre " << (i + 1) << " :\n";
+        cout << sortedBooks[i]->toString() << "\n";
+        cout << "-------------------------\n";
+    }
+}
+
+//Generer automatiquement un ID utilisateur
+string Library::generateUserId() {
+    int maxId = 0;
+
+    for (auto& user : users) {
+        string id = user->getUserId();
+
+        if (id.substr(0, 3) == "USR") {
+            string number = id.substr(3);
+
+            if (!number.empty() &&
+                all_of(number.begin(), number.end(),
+                    [](char c) { return c >= '0' && c <= '9'; })) {
+
+                int currentId = stoi(number);
+
+                if (currentId > maxId) {
+                    maxId = currentId;
+                }
+            }
+        }
+    }
+
+    stringstream ss;
+    ss << "USR" << setw(3) << setfill('0') << (maxId + 1);
+    return ss.str();
+}
