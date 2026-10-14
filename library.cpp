@@ -97,7 +97,7 @@ void Library::addUser(const User& user) {
 }
 
 // Find user by ID
-User* Library::findUserById(const string& userId) {
+User* Library::findUserById(const string& userId) const {
     auto it = find_if(users.begin(), users.end(),
         [&userId](const unique_ptr<User>& user) {
             return user->getUserId() == userId;
@@ -154,9 +154,20 @@ void Library::displayAllBooks() {
     }
     
     cout << "\n=== TOUS LES LIVRES ===\n";
+
+    // Sort books
+    std::sort(books.begin(), books.end(), 
+        [](const std::unique_ptr<Book>& a, const std::unique_ptr<Book>& b) {
+            // Sort title and author
+            if (a->getTitle() != b->getTitle()) {
+                return a->getTitle() < b->getTitle();
+            }
+            return a->getAuthor() < b->getAuthor();
+        });
+
     for (size_t i = 0; i < books.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << books[i]->toString(*this) << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -173,7 +184,7 @@ void Library::displayAvailableBooks() {
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << available[i]->toString(*this) << "\n";
         cout << "---------------------------\n";
     }
 }

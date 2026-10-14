@@ -5,6 +5,7 @@
 
 #include "library.h"
 #include "filemanager.h"
+#include "logManager.h"
 
 using namespace std;
 
@@ -70,6 +71,8 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string logFile = "../data/activity.txt";
+
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +81,13 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        logFile = (filesystem::path(dataDir) / "activity.txt").string();
     }
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
+    // Initialise LogManager
+    LogManager logManager(logFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -114,6 +120,8 @@ int main(int argc, char* argv[]) {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
                     cout << "Livre ajouté avec succès !\n";
+                    // Log Manager
+                    logManager.writeLog("[AJOUT]", newBook);
                 }
                 pauseForInput();
                 break;
@@ -121,11 +129,20 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
-                if (library.removeBook(isbn)) {
-                    cout << "Livre supprimé avec succès !\n";
-                } else {
-                    cout << "Livre non trouvé.\n";
+                Book* foundBook = library.findBookByISBN(isbn);
+                // Ensure no nullptr
+                if (foundBook != nullptr) {
+
+                    // Copy before removal
+                    Book bookCopy = *foundBook;
+
+                    if (library.removeBook(isbn)) {
+                        cout << "Livre supprimé avec succès !\n";
+                        // Log Manager
+                        logManager.writeLog("[SUPPRESSION]", bookCopy);
+                    } else {
+                        cout << "Livre non trouvé.\n";
+                    }
                 }
                 pauseForInput();
                 break;
@@ -141,7 +158,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(library) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -159,7 +176,7 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(library) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -201,8 +218,13 @@ int main(int argc, char* argv[]) {
                 string isbn = getInput("Entrez l'ISBN du livre à emprunter : ");
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
+                // Store book
+                Book* book = library.findBookByISBN(isbn);
+
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    // Log manager
+                    logManager.writeLog("[EMPRUNT]", *book);
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -213,8 +235,13 @@ int main(int argc, char* argv[]) {
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
                 
+                // Store book
+                Book* book = library.findBookByISBN(isbn);
+
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    // Log manager
+                    logManager.writeLog("[RETOUR]", *book);
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }

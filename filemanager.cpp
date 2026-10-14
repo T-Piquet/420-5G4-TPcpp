@@ -24,6 +24,12 @@ bool FileManager::loadLibraryData(Library& library) {
 // Save books to file
 bool FileManager::saveBooksToFile(Library& library) {
     ofstream file(booksFileName);
+
+    if (!file) {
+        cout << "Erreur : Fichier de sauvegarde inexistant.\n";
+        return false;
+    }
+
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << booksFileName << " en écriture.\n";
         return false;
@@ -41,6 +47,12 @@ bool FileManager::saveBooksToFile(Library& library) {
 // Save users to file
 bool FileManager::saveUsersToFile(Library& library) {
     ofstream file(usersFileName);
+
+    if (!file) {
+        cout << "Erreur : Fichier de sauvegarde inexistant.\n";
+        return false;
+    }
+
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << usersFileName << " en écriture.\n";
         return false;

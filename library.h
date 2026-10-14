@@ -30,7 +30,7 @@ public:
     
     // User management
     void addUser(const User& user);
-    User* findUserById(const string& userId);
+    User* findUserById(const string& userId) const;
     vector<User*> getAllUsers();
     
     // Library operations
