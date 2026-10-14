@@ -32,6 +32,7 @@ public:
     void addUser(const User& user);
     User* findUserById(const string& userId);
     vector<User*> getAllUsers();
+    string autoIncrementUserId() const;
     
     // Library operations
     bool checkOutBook(const string& isbn, const string& userId);

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <filesystem>
 #include "filemanager.h"
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 
@@ -11,6 +13,12 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Sauvegarde non effectuée, aucun répertoir identifié \n"
+             << "Utilisez --data-dir <répertoire> \n";
+        return false;
+    }
+
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -120,4 +128,16 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+void FileManager::logActivity(const string& action, const string& details){
+    ofstream file(journalLog, ios::app);//app pour append, permet d'ajouter de l'infos pour conserver le journal entre sessions
+    if (!file.is_open()) {
+        cout << "Erreur : Impossible d'ouvrir " << journalLog << " en écriture.\n";
+    } else {
+        time_t mtn = time(nullptr);
+        tm* dateHeure = localtime(&mtn);
+        file << put_time(dateHeure,  "%Y-%m-%d %H:%M:%S");
+        file << " - [" <<action << "] " << details << "\n";
+    }
 }
