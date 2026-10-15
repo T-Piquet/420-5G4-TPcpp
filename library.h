@@ -32,13 +32,14 @@ public:
     void addUser(const User& user);
     User* findUserById(const string& userId);
     vector<User*> getAllUsers();
+    string generateNextUserId();
     
     // Library operations
     bool checkOutBook(const string& isbn, const string& userId);
     bool returnBook(const string& isbn);
     
     // Display methods
-    void displayAllBooks();
+    void displayAllBooks(int sortChoice = 0);
     void displayAvailableBooks();
     void displayAllUsers();
     

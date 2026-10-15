@@ -5,6 +5,7 @@
 
 #include "library.h"
 #include "filemanager.h"
+#include "journal.h"
 
 using namespace std;
 
@@ -45,6 +46,16 @@ string getInput(const string& prompt) {
     return input;
 }
 
+string bookForJournal(Library& library, Book* book) {
+    string borrowerName = "";
+    User* borrower = library.findUserById(book->getBorrowerId());
+    if (borrower) {
+        borrowerName = borrower->getName();
+    }
+    return book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|" +
+           (book->getAvailability() ? "1" : "0") + "|" + borrowerName;
+}
+
 void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
@@ -70,6 +81,7 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string journalFile = "journal.log";
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +90,12 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        journalFile = (filesystem::path(dataDir) / "journal.log").string();
     }
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
+    Journal journal(journalFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -114,6 +128,7 @@ int main(int argc, char* argv[]) {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
                     cout << "Livre ajouté avec succès !\n";
+                    journal.log("AJOUT LIVRE", bookForJournal(library, library.findBookByISBN(isbn)));
                 }
                 pauseForInput();
                 break;
@@ -121,9 +136,13 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
+
+                Book* book = library.findBookByISBN(isbn);
+                string details = book ? bookForJournal(library, book) : "";
+
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    journal.log("SUPPRESSION LIVRE", details);
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -167,27 +186,32 @@ int main(int argc, char* argv[]) {
                 break;
             }
             
-            case 5: // Display All Books
-                library.displayAllBooks();
+            case 5: { // Display All Books
+                string sortChoice = getInput("Trier par : 1. Titre  2. Auteur  (Entrée = sans tri) : ");
+                if (sortChoice == "1") {
+                    library.displayAllBooks(1);
+                } else if (sortChoice == "2") {
+                    library.displayAllBooks(2);
+                } else {
+                    library.displayAllBooks();
+                }
                 pauseForInput();
                 break;
+            }
             
             case 6: // Display Available Books
                 library.displayAvailableBooks();
                 pauseForInput();
                 break;
             
-            case 7: { // Add User
+            case 7: { // Add User Modified to generate user ID automatically
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
-                
-                if (library.findUserById(userId)) {
-                    cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
-                } else {
-                    User newUser(name, userId);
-                    library.addUser(newUser);
-                    cout << "Utilisateur ajouté avec succès !\n";
-                }
+                string userId = library.generateNextUserId();
+
+                User newUser(name, userId);
+                library.addUser(newUser);
+                cout << "Utilisateur ajouté avec succès ! ID attribué : " << userId << "\n";
+                journal.log("AJOUT UTILISATEUR", name + "|" + userId);
                 pauseForInput();
                 break;
             }
@@ -203,6 +227,7 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    journal.log("EMPRUNT", bookForJournal(library, library.findBookByISBN(isbn)));
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -212,9 +237,14 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
-                
+
+                // Keep the book info before the return, to know who returned it
+                Book* book = library.findBookByISBN(isbn);
+                string details = book ? bookForJournal(library, book) : "";
+
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    journal.log("RETOUR", details);
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }

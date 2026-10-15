@@ -1,5 +1,7 @@
 #include <iostream>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 #include "library.h"
 
@@ -115,6 +117,28 @@ vector<User*> Library::getAllUsers() {
     return allUsers;
 }
 
+// Generate the next user ID from the highest existing number
+string Library::generateNextUserId() {
+    int maxNumber = 0;
+    for (auto& user : users) {
+        string id = user->getUserId();
+        if (id.size() > 3 && id.substr(0, 3) == "USR") {
+            try {
+                int number = stoi(id.substr(3));
+                if (number > maxNumber) {
+                    maxNumber = number;
+                }
+            } catch (const exception&) {
+                // Ignore IDs that don't follow the format
+            }
+        }
+    }
+
+    ostringstream newId;
+    newId << "USR" << setw(3) << setfill('0') << (maxNumber + 1);
+    return newId.str();
+}
+
 // Check out book
 bool Library::checkOutBook(const string& isbn, const string& userId) {
     Book* book = findBookByISBN(isbn);
@@ -147,16 +171,27 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
+void Library::displayAllBooks(int sortChoice) {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
-    
+
+    vector<Book*> list = getAllBooks();
+    if (sortChoice == 1) {
+        sort(list.begin(), list.end(), [](Book* a, Book* b) {
+            return a->getTitle() < b->getTitle();
+        });
+    } else if (sortChoice == 2) {
+        sort(list.begin(), list.end(), [](Book* a, Book* b) {
+            return a->getAuthor() < b->getAuthor();
+        });
+    }
+
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < list.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << list[i]->toString() << "\n";
         cout << "-------------------------\n";
     }
 }

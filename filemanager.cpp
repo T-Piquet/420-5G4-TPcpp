@@ -11,6 +11,10 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Aucun répertoire de données spécifié, les données ne sont pas sauvegardées.\n";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -111,13 +115,18 @@ bool FileManager::fileExists(const string& filename) {
 
 // Create backup
 void FileManager::createBackup() {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Aucun répertoire de données spécifié, aucune sauvegarde créée.\n";
+        return;
+    }
+
     if (fileExists(booksFileName)) {
-        filesystem::copy_file(booksFileName, booksFileName + ".backup");
+        filesystem::copy_file(booksFileName, booksFileName + ".backup", filesystem::copy_options::overwrite_existing);
     }
-    
+
     if (fileExists(usersFileName)) {
-        filesystem::copy_file(usersFileName, usersFileName + ".backup");
+        filesystem::copy_file(usersFileName, usersFileName + ".backup", filesystem::copy_options::overwrite_existing);
     }
-    
+
     cout << "Fichiers de sauvegarde créés.\n";
 }
