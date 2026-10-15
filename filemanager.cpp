@@ -1,13 +1,17 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <ctime>
+
 #include "filemanager.h"
 
 using namespace std;
 
 // Constructor
 FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+    : booksFileName(booksFile), usersFileName(usersFile) {
+        logsFileName = (filesystem::path(booksFile).parent_path()/"logs.log").string();
+    }
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
@@ -23,6 +27,11 @@ bool FileManager::loadLibraryData(Library& library) {
 
 // Save books to file
 bool FileManager::saveBooksToFile(Library& library) {
+    if (booksFileName.empty()){
+        cout << "Erreur : Aucun répertoire spécifique trouvé. Sauvegarde des livres ignorée.\n";
+        return false;
+    }
+
     ofstream file(booksFileName);
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << booksFileName << " en écriture.\n";
@@ -40,6 +49,11 @@ bool FileManager::saveBooksToFile(Library& library) {
 
 // Save users to file
 bool FileManager::saveUsersToFile(Library& library) {
+    if (usersFileName.empty()){
+        cout << "Erreur : Aucun répertoire spécifique trouvé. Sauvegarde des utilisateurs ignorée.\n";
+        return false;
+    }
+
     ofstream file(usersFileName);
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << usersFileName << " en écriture.\n";
@@ -111,6 +125,10 @@ bool FileManager::fileExists(const string& filename) {
 
 // Create backup
 void FileManager::createBackup() {
+    if (booksFileName.empty() || usersFileName.empty()){
+        cout << "Erreur : Chemin non-défini. Impossible de créer une sauvegarde.\n";
+    }
+
     if (fileExists(booksFileName)) {
         filesystem::copy_file(booksFileName, booksFileName + ".backup");
     }
@@ -120,4 +138,26 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+// https://www.geeksforgeeks.org/cpp/logging-system-in-cpp/
+// https://github.com/Ahmed-Ibrahim-30/Logging-System
+// https://en.cppreference.com/cpp/chrono/c/localtime
+// https://en.cppreference.com/cpp/chrono/c/strftime
+// https://en.cppreference.com/cpp/chrono/c/time
+
+// Write logs for timestamp/action/details
+void FileManager::writeLog(string& action, string& details){
+    ofstream saveFile(logsFileName, ios::app);
+
+    if (saveFile.is_open()){
+        time_t now=time(nullptr);
+        char timeStamp[25];
+        strftime(timeStamp, sizeof(timeStamp), "%Y-%m-%d %H:%M:%S", localtime(&now));
+
+        saveFile << timeStamp << " - [" << action << "] " << details << endl;
+        saveFile.close();
+    } else {
+        cout << "Erreur : Impossible d'afficher le contenu " << logsFileName << "\n.";
+    }
 }
