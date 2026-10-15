@@ -121,3 +121,12 @@ void FileManager::createBackup() {
     
     cout << "Fichiers de sauvegarde créés.\n";
 }
+
+void FileManager::journal(const string& action, const string& title) {
+    ofstream journal("../data/journal.txt", ios::app);
+
+    auto heure = chrono::system_clock::now();
+    time_t temps = chrono::system_clock::to_time_t(heure);
+
+    journal << put_time(localtime(&temps), "%Y-%m-%d %H:%M:%S") << " - [ " << action << "] " << title << "\n";
+}

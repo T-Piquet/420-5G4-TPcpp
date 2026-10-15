@@ -148,15 +148,32 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
+    string borrowerId;
+    User* borrowerName;
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    sort(books.begin(), books.end(), [](const unique_ptr<Book>& a,const unique_ptr<Book>& b) {
+
+        if(a->getAuthor() == b->getAuthor()) {
+            return a->getTitle() < b->getTitle();
+        } else {
+            return a->getAuthor() < b->getAuthor();
+        }
+    });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
     for (size_t i = 0; i < books.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        if(books[i]->getAvailability()) {
+            cout << books[i]->toString() << "\n";
+        } else {
+            borrowerId = books[i]->getBorrowerId();
+            borrowerName = findUserById(borrowerId);
+            cout << books[i]->toString(borrowerName->getName()) << "\n";
+        }
         cout << "-------------------------\n";
     }
 }
@@ -169,6 +186,15 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+    sort(books.begin(), books.end(), [](const unique_ptr<Book>& a,const unique_ptr<Book>& b) {
+
+        if(a->getAuthor() == b->getAuthor()) {
+            return a->getTitle() < b->getTitle();
+        } else {
+            return a->getAuthor() < b->getAuthor();
+        }
+    });
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {

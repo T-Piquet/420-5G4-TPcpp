@@ -29,6 +29,8 @@ public:
     // Utility methods
     bool fileExists(const string& filename);
     void createBackup();
+
+    void journal(const string& action, const string& title);
 };
 
 #endif

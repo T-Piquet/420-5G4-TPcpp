@@ -38,6 +38,7 @@ public:
     string toString() const;
     string toFileFormat() const;
     void fromFileFormat(const string& line);
+    string toString(const string& borrowerName) const;
 };
 
 #endif
