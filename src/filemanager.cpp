@@ -6,11 +6,17 @@
 using namespace std;
 
 // Constructor
-FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+FileManager::FileManager(const string& booksFile, const string& usersFile, const string& journalFile)
+    : booksFileName(booksFile), usersFileName(usersFile), journalFileName(journalFile) {}
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Erreur : sauvegarde annulée, le chemin des fichiers de données est vide.\n";
+        cout << "Lancez le programme avec --data-dir <répertoire>.\n";
+        return false;
+    }
+
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -29,7 +35,7 @@ bool FileManager::saveBooksToFile(Library& library) {
         return false;
     }
     
-    auto books = library.getAllBooks();
+    auto books = library.getAllBooks(Library::SORT_BY_TITLE);
     for (Book* book : books) {
         file << book->toFileFormat() << "\n";
     }
@@ -100,6 +106,39 @@ bool FileManager::loadUsersFromFile(Library& library) {
     
     file.close();
     cout << "Chargé " << count << " utilisateur(s) depuis le fichier.\n";
+    return true;
+}
+
+bool FileManager::saveJournalToFile(Journal& journal) {
+    if (journalFileName.empty()) {
+        cerr << "Erreur : chemin du journal vide.\n";
+        return false;
+    }
+
+    ofstream file(journalFileName, ios::app);
+
+    if (!file.is_open()) {
+        cerr << "Erreur : impossible d'ouvrir "
+             << journalFileName << " en écriture.\n";
+        return false;
+    }
+
+    for (const Entry& entry : journal.getEntries()) {
+        const string serialized = Journal::serializeEntry(entry);
+
+        if (serialized.empty()) {
+            cerr << "Erreur : impossible de serialiser une entree du journal.\n";
+            return false;
+        }
+
+        file << serialized << '\n';
+
+        if (!file) {
+            cerr << "Erreur : echec de l'ecriture dans le journal.\n";
+            return false;
+        }
+    }
+
     return true;
 }
 

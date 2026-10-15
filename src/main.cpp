@@ -3,6 +3,8 @@
 #include <string>
 #include <filesystem>
 
+#include "book.h"
+#include "journal.h"
 #include "library.h"
 #include "filemanager.h"
 
@@ -45,6 +47,27 @@ string getInput(const string& prompt) {
     return input;
 }
 
+Library::SortType requestBookSortType() {
+    int choice;
+
+    cout << "\n=== ORDRE DE TRI DES LIVRES ===\n";
+    cout << "1. Par titre\n";
+    cout << "2. Par auteur\n";
+    cout << "Entrez votre choix : ";
+
+    while (!(cin >> choice) || choice < 1 || choice > 2) {
+        cout << "Choix invalide. Entrez 1 ou 2 : ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    return (choice == 1)
+        ? Library::SORT_BY_TITLE
+        : Library::SORT_BY_AUTHOR;
+}
+
 void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
@@ -70,6 +93,7 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string journalFile;
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +102,12 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        journalFile = (filesystem::path(dataDir) / "journal.txt").string();
     }
 
     Library library;
-    FileManager fileManager(booksFile, usersFile);
+    Journal journal;
+    FileManager fileManager(booksFile, usersFile, journalFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -113,6 +139,8 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+
+                    journal.log_add_book(newBook);
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,8 +149,14 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
+
+                Book* book = library.findBookByISBN(isbn);
                 
-                if (library.removeBook(isbn)) {
+                if (book != nullptr) {
+                    // normally you wouldn't log before removing, but since I am not sure of book's data lifecycle, I prefer to do it like that.
+                    journal.log_delete_book(*book);
+                    library.removeBook(isbn);
+
                     cout << "Livre supprimé avec succès !\n";
                 } else {
                     cout << "Livre non trouvé.\n";
@@ -133,7 +167,8 @@ int main(int argc, char* argv[]) {
             
             case 3: { // Search by Title
                 string title = getInput("Entrez le titre à rechercher : ");
-                auto results = library.searchBooksByTitle(title);
+                Library::SortType st = requestBookSortType();
+                auto results = library.searchBooksByTitle(title, st);
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé avec ce titre.\n";
@@ -151,7 +186,8 @@ int main(int argc, char* argv[]) {
             
             case 4: { // Search by Author
                 string author = getInput("Entrez l'auteur à rechercher : ");
-                auto results = library.searchBooksByAuthor(author);
+                Library::SortType st = requestBookSortType();
+                auto results = library.searchBooksByAuthor(author, st);
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé de cet auteur.\n";
@@ -167,16 +203,18 @@ int main(int argc, char* argv[]) {
                 break;
             }
             
-            case 5: // Display All Books
-                library.displayAllBooks();
+            case 5: { // Display All Books
+                Library::SortType st = requestBookSortType();
+                library.displayAllBooks(st);
                 pauseForInput();
                 break;
-            
-            case 6: // Display Available Books
-                library.displayAvailableBooks();
+            }
+            case 6: { // Display Available Books
+                Library::SortType st = requestBookSortType();
+                library.displayAvailableBooks(st);
                 pauseForInput();
                 break;
-            
+            }
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
@@ -186,6 +224,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
+                    journal.log_add_user(newUser);
                     cout << "Utilisateur ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -202,6 +241,8 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    // no need to validate the pointers, as we know that if checkout worked, isbn and id is valid
+                    journal.log_borrow_book(*library.findBookByISBN(isbn), *library.findUserById(userId));
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -212,12 +253,21 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
-                
+
+                Book* book = library.findBookByISBN(isbn);
+                User* user = book ? library.findUserById(book->getBorrowerId()) : nullptr;
+
                 if (library.returnBook(isbn)) {
+                    if (book && user) {
+                        journal.log_return_book(*book, *user);
+                    }
+                
                     cout << "Livre retourné avec succès !\n";
                 } else {
-                    cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
+                    cout << "Erreur : Impossible de retourner le livre. "
+                         << "Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
+            
                 pauseForInput();
                 break;
             }
@@ -234,8 +284,10 @@ int main(int argc, char* argv[]) {
             
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
+                    journal.log_save();
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
+                    journal.log_save_error("unknown");
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
                 }
                 pauseForInput();
@@ -244,6 +296,7 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                journal.log_save_backup();
                 pauseForInput();
                 break;
             }
@@ -251,6 +304,8 @@ int main(int argc, char* argv[]) {
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
                 fileManager.saveLibraryData(library);
+                journal.log_save();
+                fileManager.saveJournalToFile(journal);
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
                 break;
