@@ -33,9 +33,10 @@ public:
     void setBorrowerId(const string& id);
 
     // Methods
+    string trim(const string& value);
     void checkOut(const string& borrowerId);
     void returnBook();
-    string toString() const;
+    string toString(const string& borrowersName) const;
     string toFileFormat() const;
     void fromFileFormat(const string& line);
 };

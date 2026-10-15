@@ -2,6 +2,8 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <algorithm>
+#include <vector>
 
 #include "library.h"
 #include "filemanager.h"
@@ -47,6 +49,15 @@ string getInput(const string& prompt) {
 
 void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
+}
+
+void sortBooksByTitleAndAuthor(vector<Book*>& books) {
+    sort(books.begin(), books.end(), [](const Book* left, const Book* right) {
+        if (left->getTitle() != right->getTitle()) {
+            return left->getTitle() < right->getTitle();
+        }
+        return left->getAuthor() < right->getAuthor();
+    });
 }
 
 int main(int argc, char* argv[]) {
@@ -113,6 +124,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    fileManager.saveJournal("AJOUT LIVRE", newBook.toFileFormat());
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,9 +133,11 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
+                Book* oldBook = library.findBookByISBN(isbn);
+                string oldBookDescription = oldBook ? oldBook->toFileFormat() : "";
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    fileManager.saveJournal("SUPPRESSION LIVRE", oldBookDescription);
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -134,14 +148,19 @@ int main(int argc, char* argv[]) {
             case 3: { // Search by Title
                 string title = getInput("Entrez le titre à rechercher : ");
                 auto results = library.searchBooksByTitle(title);
+                sortBooksByTitleAndAuthor(results);
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé avec ce titre.\n";
                 } else {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
+                        string borrowerId = results[i]->getBorrowerId();
+                        User* borrower = library.findUserById(borrowerId);
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(
+                            borrower ? borrower->getName() : borrowerId
+                        ) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -152,14 +171,19 @@ int main(int argc, char* argv[]) {
             case 4: { // Search by Author
                 string author = getInput("Entrez l'auteur à rechercher : ");
                 auto results = library.searchBooksByAuthor(author);
+                sortBooksByTitleAndAuthor(results);
                 
                 if (results.empty()) {
                     cout << "Aucun livre trouvé de cet auteur.\n";
                 } else {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
+                        string borrowerId = results[i]->getBorrowerId();
+                        User* borrower = library.findUserById(borrowerId);
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                        cout << results[i]->toString(
+                            borrower ? borrower->getName() : borrowerId
+                        ) << "\n";
                         cout << "-----------------------------\n";
                     }
                 }
@@ -186,6 +210,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
+                    fileManager.saveJournal("AJOUT UTILISATEUR", newUser.toFileFormat());
                     cout << "Utilisateur ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -200,9 +225,13 @@ int main(int argc, char* argv[]) {
             case 9: { // Check Out Book
                 string isbn = getInput("Entrez l'ISBN du livre à emprunter : ");
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
+
+                Book* book = library.findBookByISBN(isbn);
+                string bookDescription = book ? book->toFileFormat() : "";
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    fileManager.saveJournal("EMPRUNT", bookDescription);
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -212,9 +241,13 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
+
+                Book* book = library.findBookByISBN(isbn);
+                string bookDescription = book ? book->toFileFormat() : "";
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    fileManager.saveJournal("RETOUR", bookDescription);
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
