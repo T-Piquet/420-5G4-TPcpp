@@ -17,7 +17,7 @@ Tartuffe|Molière|9782070380770|1|
 Dom Juan|Molière|9782070380787|1|
 Andromaque|Jean Racine|9782070380817|0|USR007
 Le Barbier de Séville|Beaumarchais|9782070380855|1|
-Britannicus|Jean Racine|9782070380824|1|
+Britannicus|Jean Racine|9782070380824|0|USR028
 La Princesse de Clèves|Madame de Lafayette|9782070360031|0|USR008
 Manon Lescaut|Abbé Prévost|9782070360048|1|
 Paul et Virginie|Bernardin de Saint-Pierre|9782070360055|1|
@@ -39,3 +39,5 @@ Maximes|La Rochefoucauld|9782070380987|1|
 Pensées|Blaise Pascal|9782070380994|0|USR014
 Lettres persanes|Montesquieu|9782070381001|1|
 De l'esprit des lois|Montesquieu|9782070381018|1|
+hARRY Potter|jk rowling|0987654321|0|USR027
+Formatage|TP|111|1|
