@@ -2,6 +2,8 @@
 #include <iostream>
 #include <filesystem>
 #include "filemanager.h"
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 
@@ -11,6 +13,10 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Erreur : sauvegarde impossible sans répertoire de données. " << "Utilisez la commande --data-dir pour indiquer le chemin du répertoire.\n";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -120,4 +126,20 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+// Sauvegarder le journal.txt
+void FileManager::sauvegarderLeFichierJournal(const string& evenement, const string& description) {
+    filesystem::path cheminJournal = filesystem::path(booksFileName).parent_path() / "journal.txt";
+
+    ofstream file(cheminJournal, ios::app);
+
+    if (file.is_open()) {
+        time_t tempsActuel   = time(nullptr);
+        tm* dateEtTemps = localtime(&tempsActuel);
+
+        file << put_time(dateEtTemps, "%Y-%m-%d %H:%M:%S") << " - [" << evenement << "] "  << description << "\n";
+    } else {
+        cout << "Erreur, Il n'est pas possible d'écrire dans le fichier journal : " << cheminJournal << "\n";
+    }
 }

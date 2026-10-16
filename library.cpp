@@ -148,15 +148,21 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
-    if (books.empty()) {
+    vector<Book*> livres = getAllBooks();
+
+    if (livres.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    sort(livres.begin(), livres.end(), [](Book* a, Book* b) {
+        return a->getTitle() < b->getTitle() || (a->getTitle() == b->getTitle() && a->getAuthor() < b->getAuthor());
+        });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < livres.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << livres[i]->toString() << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -169,6 +175,10 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+    sort(available.begin(), available.end(), [](Book* a, Book* b) {
+        return a->getTitle() < b->getTitle() || (a->getTitle() == b->getTitle() && a->getAuthor() < b->getAuthor());
+        });
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
