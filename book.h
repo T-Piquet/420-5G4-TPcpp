@@ -36,6 +36,7 @@ public:
     void checkOut(const string& borrowerId);
     void returnBook();
     string toString() const;
+    string toStringAvecNom(const string& borrowerName);
     string toFileFormat() const;
     void fromFileFormat(const string& line);
 };
