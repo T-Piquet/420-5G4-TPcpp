@@ -29,6 +29,7 @@ public:
     // Utility methods
     bool fileExists(const string& filename);
     void createBackup();
+    void logAction(const string& action, const string& details);
 };
 
 #endif
