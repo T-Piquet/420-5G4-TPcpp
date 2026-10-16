@@ -8,6 +8,13 @@ using namespace std;
 // Default constructor
 User::User() : name(""), userId("") {}
 
+int User::nextUserId = 1;
+
+// Constructeur qui génère un ID unique
+User::User(const string& name) : name(name) {
+    userId = "user_" + to_string(nextUserId++);
+}
+
 // Parameterized constructor
 User::User(const string& name, const string& userId) 
     : name(name), userId(userId) {}
@@ -78,7 +85,15 @@ void User::fromFileFormat(const string& line) {
     
     getline(ss, name, '|');
     getline(ss, userId, '|');
-    
+    // Garder le compteur au-dessus des ID deja chargés ("user_N")
+    if (userId.rfind("user_", 0) == 0) {
+        try {
+            int num = stoi(userId.substr(5));
+            if (num >= nextUserId) {
+                nextUserId = num + 1;
+            }
+        } catch (...) {}
+    }
     string booksStr;
     getline(ss, booksStr, '|');
     
