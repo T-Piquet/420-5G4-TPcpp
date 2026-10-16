@@ -33,6 +33,8 @@ void displayMenu() {
     cout << "11. Statistiques de la Bibliothèque\n";
     cout << "12. Sauvegarder les Données\n";
     cout << "13. Créer une Sauvegarde\n";
+    cout << "14. Sauvegarder les donnees en CSV\n";
+    cout << "15. Importation de donnes a partir d'un fichier CSV\n";
     cout << "0.  Quitter\n";
     cout << "======================================================\n";
     cout << "Entrez votre choix : ";
@@ -141,7 +143,18 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+
+                        if (results[i]->getAvailability())
+                        {
+                            cout << results[i]->toString() << "\n";
+                        }else{
+                            cout << results[i]->toString(library) << "\n";
+                        }
+                        
+
+
+
+                        
                         cout << "-----------------------------\n";
                     }
                 }
@@ -159,7 +172,12 @@ int main(int argc, char* argv[]) {
                     cout << "\n=== RÉSULTATS DE RECHERCHE ===\n";
                     for (size_t i = 0; i < results.size(); ++i) {
                         cout << "\nRésultat " << (i + 1) << " :\n";
-                        cout << results[i]->toString() << "\n";
+                         if (results[i]->getAvailability())
+                        {
+                            cout << results[i]->toString() << "\n";
+                        }else{
+                            cout << results[i]->toString(library) << "\n";
+                        }
                         cout << "-----------------------------\n";
                     }
                 }
@@ -179,13 +197,17 @@ int main(int argc, char* argv[]) {
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
+                string userId = library.generateNextUserId();
+
+                cout<<"ID genere : " << userId << "\n";
+
                 
                 if (library.findUserById(userId)) {
                     cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
+                    library.updateUserCount(library.getAllUsers().size());
                     cout << "Utilisateur ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -233,19 +255,63 @@ int main(int argc, char* argv[]) {
             }
             
             case 12: { // Save Data
-                if (fileManager.saveLibraryData(library)) {
+                if (dataDir.empty())
+                {
+                    cout << "Veuillez lancer le programme en specifiant de repertoire des donnees de l'application \n" <<
+                     " ex :./bibliotheque -d /repertoireData";
+
+                }else{
+                     if (fileManager.saveLibraryData(library)) {
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
                 }
+
+
+                }
+
                 pauseForInput();
                 break;
+                
+                
+               
             }
             
             case 13: { // Create Backup
                 fileManager.createBackup();
                 pauseForInput();
                 break;
+            }
+
+            case 14:{ // sauvegarde CSV
+                string nomFichier = "sauvegarde.csv";
+                if (fileManager.exportToCSV(library,nomFichier))
+                {
+                    cout << "Sauvegarde CSV reussie dans le fichier : " <<nomFichier << "\n"; 
+                }else{
+                    cout << "Erreur lors de la sauvegarde CSV \n";
+                }
+                pauseForInput();
+
+                break;
+                
+            }
+
+            case 15:{
+                string nomFichier = "sauvegarde.csv";
+                cout << "importation des livres depuis " << nomFichier << "...\n";
+
+
+                if (!fileManager.importFromCSV(library,nomFichier))
+                {
+                    cout << "erreur lors de l'importation du fichier CSV. \n";
+                }
+
+                pauseForInput();
+
+                break;  
+                
+
             }
             
             case 0: // Exit

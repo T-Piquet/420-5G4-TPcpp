@@ -1,12 +1,16 @@
 #include <iostream>
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 #include "library.h"
 
 using namespace std;
 
 // Constructor
-Library::Library() {}
+Library::Library() {
+    vectorSizeUsers = 0;
+}
 
 // Add book to library
 void Library::addBook(const Book& book) {
@@ -96,6 +100,14 @@ void Library::addUser(const User& user) {
     users.push_back(make_unique<User>(user));
 }
 
+void Library::updateUserCount(const int& size){
+    this-> vectorSizeUsers = size;
+}
+
+ int Library::getUserCount(){
+    return vectorSizeUsers;
+}
+
 // Find user by ID
 User* Library::findUserById(const string& userId) {
     auto it = find_if(users.begin(), users.end(),
@@ -113,6 +125,38 @@ vector<User*> Library::getAllUsers() {
         allUsers.push_back(user.get());
     }
     return allUsers;
+}
+
+string Library::generateNextUserId(){
+    int maxId = 0;
+
+    //trouver le plus gros user
+    for (const auto& user : users) {
+        string currentIdStr = user->getUserId(); 
+        
+        // oncheck si le id commence bien apr USR et a une suite
+        if (currentIdStr.length() > 3 && currentIdStr.substr(0, 3) == "USR") {
+            try {
+                // extraire la partie apres le USR
+                int currentNum = stoi(currentIdStr.substr(3));
+                if (currentNum > maxId) {
+                    maxId = currentNum; //on prends le plus gros id
+                }
+            } catch (const exception& e) {
+                // ici c'est juste pour ignorer si il y a un id mal formate
+            }
+        }
+    }
+
+    //on calcule le prochain id
+    int nextId = maxId + 1;
+
+    // je formate la chaine a mettre -> USR001 par ex
+    ostringstream oss;
+    oss << "USR" << setfill('0') << setw(3) << nextId; // setw fait en sorte que j'on prenne au moins
+    //3 caracteres de large et qu'on le fill up avec des 0 si pas utilise
+    
+    return oss.str();
 }
 
 // Check out book
@@ -156,7 +200,16 @@ void Library::displayAllBooks() {
     cout << "\n=== TOUS LES LIVRES ===\n";
     for (size_t i = 0; i < books.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+
+        if (books[i]->getAvailability())
+        {
+            cout << books[i]->toString() << "\n";
+        }else{
+            cout << books[i]->toString(*this) << "\n"; // convertir le pointeur en reference il faut le *
+        }
+        
+
+        
         cout << "-------------------------\n";
     }
 }
@@ -202,3 +255,4 @@ int Library::getAvailableBookCount() const {
         });
 }
 int Library::getCheckedOutBookCount() const { return getTotalBooks() - getAvailableBookCount(); }
+

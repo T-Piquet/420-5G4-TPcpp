@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include "filemanager.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -96,7 +97,9 @@ bool FileManager::loadUsersFromFile(Library& library) {
             library.addUser(user);
             count++;
         }
+        
     }
+    library.updateUserCount(count);
     
     file.close();
     cout << "Chargé " << count << " utilisateur(s) depuis le fichier.\n";
@@ -121,3 +124,109 @@ void FileManager::createBackup() {
     
     cout << "Fichiers de sauvegarde créés.\n";
 }
+
+bool FileManager::exportToCSV(Library& library, const string& filename){
+    // je verifie si le ficheir existe deja et si il est plein
+    bool writeHeader = true;
+    if (filesystem::exists(filename) && filesystem::file_size(filename) > 0) {
+        writeHeader = false; // le fichier existe deja et est pas vide
+    }
+
+    // ca ouvre le fichier en mode append
+    ofstream file(filename, ios::app);
+    if (!file.is_open()) {
+        cout << "erreur : Impossible d'ouvrir " << filename << " en ecriture.\n";
+        return false;
+    }
+
+    // ecrit l'entete SEULEMENT si c'est un nouveau fichier
+    if (writeHeader) {
+        file << "Titre,Auteur,ISBN,Disponible,Emprunteur_ID\n";
+    }
+
+    // recupere tout les livres et les met en ecriture un par un
+    auto books = library.getAllBooks();
+    for (Book* book : books) {
+        file << "\"" << book->getTitle() << "\","
+             << "\"" << book->getAuthor() << "\","
+             << "\"" << book->getISBN() << "\","
+             << (book->getAvailability() ? "Oui" : "Non") << ","
+             << "\"" << book->getBorrowerId() << "\"\n";
+    }
+
+    file.close();
+    return true;
+
+
+
+}
+
+bool FileManager::importFromCSV(Library& library, const string& filename){
+    ifstream file(filename);
+    if (!file.is_open())
+    {
+        cout << "Erreur : impossible d'ouvrir " << filename << "\n";
+        return false;
+    }
+    string line;
+
+    getline(file,line);
+
+    int count = 0;
+
+    while (getline(file,line))
+    {
+        if (line.empty())
+        {
+            continue;
+        }
+
+        stringstream ss(line);
+        string titre, auteur, isbn, dispoStr, id;
+
+        getline(ss,titre,',');
+        getline(ss,auteur,',');
+        getline(ss,isbn,',');
+        getline(ss,dispoStr,',');
+        getline(ss,id,',');
+
+
+        titre.erase(remove(titre.begin(),titre.end(),'\"'),titre.end());
+        auteur.erase(remove(auteur.begin(),auteur.end(),'\"'),auteur.end());
+        isbn.erase(remove(isbn.begin(),isbn.end(),'\"'),isbn.end());
+        id.erase(remove(id.begin(),id.end(),'\"'),id.end());
+
+
+        if (!library.findBookByISBN(isbn))
+        {
+            Book newBook(titre,auteur,isbn);
+
+
+
+            if (dispoStr == "Non")
+            {
+                newBook.setAvailability(false);
+                newBook.setBorrowerId(id);
+            }
+
+            library.addBook(newBook);
+            count++;
+            
+        }
+        
+
+        
+
+        
+    }
+
+
+    file.close();
+
+    cout << count << " livres ont ete ajoute depuis le csv. \n";
+
+    return true;
+    
+    
+}
+
