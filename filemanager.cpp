@@ -11,6 +11,15 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+
+    //verifier si les chemins sont vides
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "\nAvertissement : Aucun fichier de sauvegarde spécifié (lancé sans --data-dir)." << "\n";
+        cout << "Les donnees de cette session ne seront pas sauvegardees.\n";
+
+        //retourner false pour empecher la sauvegarde
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 

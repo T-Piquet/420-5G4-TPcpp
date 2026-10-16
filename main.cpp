@@ -236,7 +236,7 @@ int main(int argc, char* argv[]) {
                 if (fileManager.saveLibraryData(library)) {
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
-                    cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
+                    cout << "Aucune sauvegarde faite\n";
                 }
                 pauseForInput();
                 break;

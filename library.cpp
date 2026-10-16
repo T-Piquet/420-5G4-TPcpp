@@ -152,11 +152,34 @@ void Library::displayAllBooks() {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    // Triage de tous les livres
+    vector<Book*> livresTries = getAllBooks();
+
+    sort(livresTries.begin(), livresTries.end(),[](Book*a, Book*b){
+        // si des livres ont le meme titre on tri par autheur
+        if (a->getTitle() == b->getTitle()){
+            return a->getAuthor()< b->getAuthor();
+        }
+
+        // sinon on tri par le titre
+        return a->getTitle() < b->getTitle();
+    });
+
+
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < livresTries.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << livresTries[i]->toString() << "\n";
+        
+        // si le livre n'est pas disponible, on va chercher le nom a partir de l'id et l'afficher
+        if(!livresTries[i]->getAvailability()){
+            User* nom = findUserById(livresTries[i]->getBorrowerId());
+            if(nom != nullptr){
+                cout << "Emprunte par : " << nom ->getName()<< "\n";
+            }
+        }
         cout << "-------------------------\n";
     }
 }
@@ -169,6 +192,17 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+    
+    // Triage par titre puis autheur
+    sort(available.begin(), available.end(),[](Book*a, Book*b){
+        // si des livres ont le meme titre on tri par autheur
+        if (a->getTitle() == b->getTitle()){
+            return a->getAuthor()< b->getAuthor();
+        }
+
+        // sinon on tri par le titre
+        return a->getTitle() < b->getTitle();
+    });
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
