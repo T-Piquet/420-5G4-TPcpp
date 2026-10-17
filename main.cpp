@@ -5,6 +5,7 @@
 
 #include "library.h"
 #include "filemanager.h"
+#include "activitylog.h"
 
 using namespace std;
 
@@ -33,6 +34,7 @@ void displayMenu() {
     cout << "11. Statistiques de la Bibliothèque\n";
     cout << "12. Sauvegarder les Données\n";
     cout << "13. Créer une Sauvegarde\n";
+    cout << "14. Afficher les Livres Triés\n";
     cout << "0.  Quitter\n";
     cout << "======================================================\n";
     cout << "Entrez votre choix : ";
@@ -70,6 +72,7 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string logFile = "journal.log";
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
@@ -78,10 +81,12 @@ int main(int argc, char* argv[]) {
         }
         booksFile = (filesystem::path(dataDir) / "books.txt").string();
         usersFile = (filesystem::path(dataDir) / "users.txt").string();
+        logFile = (filesystem::path(dataDir) / "journal.log").string();
     }
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
+    ActivityLog activityLog(logFile);
     
     // Load existing data
     cout << "Chargement des données de la bibliothèque...\n";
@@ -113,6 +118,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    activityLog.log("AJOUT LIVRE", newBook);
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,6 +127,9 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
+
+                Book* bookToRemove = library.findBookByISBN(isbn);
+                Book removedCopy = bookToRemove ? *bookToRemove : Book();
                 
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
@@ -179,15 +188,22 @@ int main(int argc, char* argv[]) {
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
+                // string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
-                if (library.findUserById(userId)) {
-                    cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
-                } else {
-                    User newUser(name, userId);
-                    library.addUser(newUser);
-                    cout << "Utilisateur ajouté avec succès !\n";
-                }
+                // if (library.findUserById(userId)) {
+                //     cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
+                // } else {
+                //     User newUser(name, userId);
+                //     library.addUser(newUser);
+                //     cout << "Utilisateur ajouté avec succès !\n";
+                // }    
+                string userId = library.generateUserId();
+
+                User newUser(name, userId);
+                library.addUser(newUser);
+                activityLog.logMessage("AJOUT UTILISATEUR", name + "|" + userId);
+                cout << "Utilisateur ajouté avec succès ! ID attribué : " << userId << "\n";
+
                 pauseForInput();
                 break;
             }
@@ -202,6 +218,9 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    Book* borrowed = library.findBookByISBN(isbn);
+                    User* borrower = library.findUserById(userId);
+                    activityLog.log("EMPRUNT", *borrowed, borrower->getName());
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -213,6 +232,13 @@ int main(int argc, char* argv[]) {
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
                 
+                string borrowerName;
+                Book* bookToReturn = library.findBookByISBN(isbn);
+                if(bookToReturn){
+                    User* borrower = library.findUserById(bookToReturn->getBorrowerId());
+                    if(borrower) borrowerName = borrower->getName();
+                }
+
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
                 } else {
@@ -244,6 +270,21 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                pauseForInput();
+                break;
+            }
+
+            //Display sorted books
+            case 14: {
+                cout << "Trier par :\n1. Titre\n2. Auteur\n";
+                string sortChoice = getInput("Votre choix : ");
+                if (sortChoice == "1") {
+                    library.displaySortedBooks(SortKey::Title);
+                } else if (sortChoice == "2") {
+                    library.displaySortedBooks(SortKey::Author);
+                } else {
+                    cout << "Choix invalide.\n";
+                }
                 pauseForInput();
                 break;
             }

@@ -11,6 +11,10 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if(booksFileName.empty() | usersFileName.empty()){
+        cout<<"Erreur sauvegarde : Les champs sont vides.";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -111,6 +115,11 @@ bool FileManager::fileExists(const string& filename) {
 
 // Create backup
 void FileManager::createBackup() {
+    if(booksFileName.empty() || usersFileName.empty()){
+        cout<<"Erreur backup : Les champs sont vides.";
+        return;
+    }
+
     if (fileExists(booksFileName)) {
         filesystem::copy_file(booksFileName, booksFileName + ".backup");
     }

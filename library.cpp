@@ -2,6 +2,8 @@
 #include <algorithm>
 
 #include "library.h"
+#include <cctype>
+#include <cstdio>
 
 using namespace std;
 
@@ -91,6 +93,27 @@ vector<Book*> Library::getAllBooks() {
     return allBooks;
 }
 
+//to lower case
+static string toLower(string text){
+    transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
+        return static_cast<char>(tolower(c));
+    });
+    return text;
+}
+//sort books
+vector<Book*> Library::getBooksSorted(SortKey key){
+    vector<Book*> sorted = getAllBooks();
+    sort(sorted.begin(), sorted.end(), [key](const Book* a, const Book* b){
+        string first = toLower(key == SortKey::Title ? a->getTitle() : a->getAuthor());
+        string second = toLower(key == SortKey::Title ? b->getTitle() : b->getAuthor());
+        if(first != second){
+            return first < second;
+        }
+        return toLower(a->getTitle()) < toLower(b->getTitle());
+    });
+    return sorted;
+}
+
 // Add user to library
 void Library::addUser(const User& user) {
     users.push_back(make_unique<User>(user));
@@ -113,6 +136,23 @@ vector<User*> Library::getAllUsers() {
         allUsers.push_back(user.get());
     }
     return allUsers;
+}
+
+//Generate user ID
+string Library::generateUserId() const{
+    int numMax = 0;
+    for (const auto & user : users){
+        const string & id = user->getUserId();
+        if (id.size() > 3 && id.compare(0, 3, "USR") == 0 && all_of(id.begin() + 3, id.end(), [](unsigned char c) {
+                return isdigit(c); 
+            })
+        ) {
+            numMax = max(numMax, stoi(id.substr(3)));
+        }
+    }
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "USR%03d", numMax + 1);
+    return buffer;
 }
 
 // Check out book
@@ -158,6 +198,20 @@ void Library::displayAllBooks() {
         cout << "\nLivre " << (i + 1) << " :\n";
         cout << books[i]->toString() << "\n";
         cout << "-------------------------\n";
+    }
+}
+
+//Display sorted books
+void Library::displaySortedBooks(SortKey key) {
+    auto sorted = getBooksSorted(key);
+    if (sorted.empty()) {
+        cout << "Erreur : Aucun livre dans la bibliotheque.";
+        return;
+    }
+    cout << "\n=== LIVRES TRIÉS PAR " << (key == SortKey::Title ? "TITRE" : "AUTEUR") << " ===\n";
+    for (size_t i = 0; i < sorted.size(); ++i) {
+        cout << "\nLivre " << (i + 1) << " :\n"; 
+        cout << sorted[i]->toString() << "\n";
     }
 }
 
