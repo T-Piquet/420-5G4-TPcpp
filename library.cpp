@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "library.h"
+#include "journal.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ Library::Library() {}
 // Add book to library
 void Library::addBook(const Book& book) {
     books.push_back(make_unique<Book>(book));
+    Journal::enregistrer("AJOUT LIVRE", book.getTitle() + "|" + book.getAuthor() + "|" + book.getISBN() + "|1|");
 }
 
 // Remove book from library
@@ -51,6 +53,11 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+
     return results;
 }
 
@@ -68,6 +75,11 @@ vector<Book*> Library::searchBooksByAuthor(const string& author) {
             results.push_back(book.get());
         }
     }
+
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+        return a->getAuthor() < b->getAuthor();
+    });
+
     return results;
 }
 
@@ -88,6 +100,11 @@ vector<Book*> Library::getAllBooks() {
     for (auto& book : books) {
         allBooks.push_back(book.get());
     }
+
+    sort(allBooks.begin(), allBooks.end(), [](const Book* a, const Book* b) {
+        return a->getTitle() < b->getTitle();
+    });
+    
     return allBooks;
 }
 
@@ -123,6 +140,7 @@ bool Library::checkOutBook(const string& isbn, const string& userId) {
     if (book && user && book->getAvailability()) {
         book->checkOut(user->getUserId());
         user->borrowBook(isbn);
+        Journal::enregistrer("EMPRUNT", book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|0|" + user->getName());
         return true;
     }
     return false;
@@ -141,6 +159,7 @@ bool Library::returnBook(const string& isbn) {
             }
         }
         book->returnBook();
+        Journal::enregistrer("RETOUR", book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|2|");
         return true;
     }
     return false;

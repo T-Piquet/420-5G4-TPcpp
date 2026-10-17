@@ -2,6 +2,7 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <iomanip>
 
 #include "library.h"
 #include "filemanager.h"
@@ -175,19 +176,18 @@ int main(int argc, char* argv[]) {
             case 6: // Display Available Books
                 library.displayAvailableBooks();
                 pauseForInput();
-                break;
+                break; 
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
+                size_t nextIdNum = library.getAllUsers().size() + 1;
+                ostringstream idStream;
+                idStream << "USR" << setfill('0') << setw(3) << nextIdNum;
+                string userId = idStream.str();
                 
-                if (library.findUserById(userId)) {
-                    cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
-                } else {
-                    User newUser(name, userId);
-                    library.addUser(newUser);
-                    cout << "Utilisateur ajouté avec succès !\n";
-                }
+                User newUser(name, userId);
+                library.addUser(newUser);
+                cout << "Utilisateur ajouté avec succès! \n";
                 pauseForInput();
                 break;
             }

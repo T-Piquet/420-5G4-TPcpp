@@ -11,7 +11,13 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
-    return saveBooksToFile(library) && saveUsersToFile(library);
+    if (booksFileName.empty() && usersFileName.empty()) {
+        cout << "Erreur : Aucun répertoire de données spécifié. Sauvegarde non effectué.\n";
+        return false;
+    }
+    bool booksSaved = booksFileName.empty() || saveBooksToFile(library);
+    bool usersSaved = usersFileName.empty() || saveUsersToFile(library);
+    return booksSaved && usersSaved;
 }
 
 // Load all library data
@@ -23,6 +29,11 @@ bool FileManager::loadLibraryData(Library& library) {
 
 // Save books to file
 bool FileManager::saveBooksToFile(Library& library) {
+   if (booksFileName.empty()) {
+        cout << "Erreur : Aucun fichier de livres spécifié.  Sauvegarde non effectué.\n";
+        return false;
+    }
+
     ofstream file(booksFileName);
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << booksFileName << " en écriture.\n";
@@ -40,6 +51,11 @@ bool FileManager::saveBooksToFile(Library& library) {
 
 // Save users to file
 bool FileManager::saveUsersToFile(Library& library) {
+    if (usersFileName.empty()) {
+        cout << "Erreur : Aucun fichier d'utilisateurs spécifié. Sauvegarde non effectué.\n";
+        return false;
+    }
+
     ofstream file(usersFileName);
     if (!file.is_open()) {
         cout << "Erreur : Impossible d'ouvrir " << usersFileName << " en écriture.\n";
