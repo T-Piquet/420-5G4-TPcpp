@@ -1,0 +1,7 @@
+2026-10-17 00:51:03 - [AJOUT LIVRE] Harry Potter|J.K rowling|9780747532743|1|
+2026-10-17 00:51:45 - [AJOUT UTILISATEUR] Pierre|USR028|
+2026-10-17 00:56:08 - [SUPPRESSION LIVRE] Harry Potter|J.K rowling|9780747532743|1|
+2026-10-17 00:57:40 - [EMPRUNT] Lettres persanes|Montesquieu|9782070381001|0|Marie Dubois
+2026-10-17 00:58:02 - [RETOUR] Lettres persanes|Montesquieu|9782070381001|1|
+2026-10-17 01:00:04 - [EMPRUNT] René|Chateaubriand|9782070360079|0|Sophie Lemaire
+2026-10-17 01:04:46 - [RETOUR] Les Fleurs du mal|Charles Baudelaire|9782070323087|1|

@@ -6,8 +6,8 @@
 using namespace std;
 
 // Constructor
-FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+FileManager::FileManager(const string& booksFile, const string& usersFile, const string& logFile)
+    : booksFileName(booksFile), usersFileName(usersFile), logFileName(logFile) {}
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
@@ -107,6 +107,27 @@ bool FileManager::loadUsersFromFile(Library& library) {
 bool FileManager::fileExists(const string& filename) {
     ifstream file(filename);
     return file.good();
+}
+
+// fonction d'ecriture des actions dans le journal
+void FileManager::logAction(const string& actionType, const string& details) {
+    // ios_base::app permet dajouter a la fin du fichier sans lecraser
+    ofstream logFile(logFileName, ios_base::app); 
+    
+    if (logFile.is_open()) {
+        // obtenir la date et heure
+        auto now = chrono::system_clock::now();
+        time_t now_c = chrono::system_clock::to_time_t(now);
+
+        // format : YYYY-MM-DD HH:MM:SS - [ACTION] détails
+        logFile << put_time(localtime(&now_c), "%Y-%m-%d %H:%M:%S") 
+                << " - [" << actionType << "] " 
+                << details << "\n";
+                
+        logFile.close();
+    } else {
+        cerr << "Erreur : Impossible d'écrire dans le journal.\n";
+    }
 }
 
 // Create backup

@@ -8,6 +8,7 @@ using namespace std;
 
 class User {
 private:
+    static int nextUserId; // variable statique pour générer des IDs
     string name;
     string userId;
     vector<string> borrowedBooks; // Store ISBNs of borrowed books
@@ -15,7 +16,7 @@ private:
 public:
     // Constructors
     User();
-    User(const string& name, const string& userId);
+    User(const string& name);
     
     // Getters
     string getName() const;

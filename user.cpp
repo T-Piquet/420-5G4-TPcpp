@@ -1,16 +1,30 @@
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 
 #include "user.h"
 
 using namespace std;
 
+int User::nextUserId = 1; // initialisation du compteur
+
+string genererId(int nombre) {
+    ostringstream oss;
+    oss << "USR" 
+        << setfill('0') // Remlir les espaces vides avec des '0'
+        << setw(3)      // forcer la largeur a 3 characters
+        << nombre;
+    
+    return oss.str();
+}
+
 // Default constructor
 User::User() : name(""), userId("") {}
 
 // Parameterized constructor
-User::User(const string& name, const string& userId) 
-    : name(name), userId(userId) {}
+User::User(const string& name) : name(name) {
+    userId = genererId(nextUserId++);
+}
 
 // Getters
 string User::getName() const { return name; }
@@ -90,4 +104,5 @@ void User::fromFileFormat(const string& line) {
             borrowedBooks.push_back(isbn);
         }
     }
+    nextUserId++;
 }
