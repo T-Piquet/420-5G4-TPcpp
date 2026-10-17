@@ -11,6 +11,11 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    // Si les chemins (books.txt et users.txt) sont vides, une message d'erreur s'affiche.
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Erreur : Aucun répertoire de données spécifié.\n";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
