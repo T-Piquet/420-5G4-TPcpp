@@ -1,16 +1,24 @@
 #include <fstream>
 #include <iostream>
+#include <iomanip>
+#include <ctime>
 #include <filesystem>
 #include "filemanager.h"
 
 using namespace std;
 
 // Constructor
-FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+FileManager::FileManager(const string& booksFile, const string& usersFile, const string& journalFile)
+    : booksFileName(booksFile), usersFileName(usersFile), journalFileName(journalFile) {}
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty())
+    {
+        cout << "Aucune sauvegarde effectué, répertoire de données non spécifié\n";
+        return false;
+    }
+    
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -107,6 +115,23 @@ bool FileManager::loadUsersFromFile(Library& library) {
 bool FileManager::fileExists(const string& filename) {
     ifstream file(filename);
     return file.good();
+}
+
+bool FileManager::saveJournalAction(const string& action) {
+    if (journalFileName.empty()) return false;
+
+    ofstream file(journalFileName, ios::app);
+    if (!file.is_open())
+    {
+        cout << "Erreur : Impossible d'ouvrir " << journalFileName << ".\n";
+        return false;
+    } 
+
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    file << "[" << std::put_time(&tm, "%d-%m-%Y %H:%M:%S") << "]" << " - " << action << "\n";
+    
+    return true;
 }
 
 // Create backup

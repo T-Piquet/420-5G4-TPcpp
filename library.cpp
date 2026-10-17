@@ -91,6 +91,17 @@ vector<Book*> Library::getAllBooks() {
     return allBooks;
 }
 
+// Sort books by title then authors
+void Library::sortBooks(vector<Book*>& list) {
+    sort(list.begin(), list.end(), [](const Book* a, const Book* b){
+        if (a->getTitle() != b->getTitle())
+        {
+            return a->getTitle() < b->getTitle();
+        }
+        return a->getAuthor() < b->getAuthor();
+    });
+}
+
 // Add user to library
 void Library::addUser(const User& user) {
     users.push_back(make_unique<User>(user));
@@ -148,16 +159,19 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
-    if (books.empty()) {
-        cout << "Aucun livre dans la bibliothèque.\n";
+    auto all = getAllBooks();
+    
+    sortBooks(all);
+    if (all.empty()) {
+        cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < all.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
-        cout << "-------------------------\n";
+        cout << all[i]->toString("") << "\n";
+        cout << "---------------------------\n";
     }
 }
 
@@ -165,6 +179,7 @@ void Library::displayAllBooks() {
 void Library::displayAvailableBooks() {
     auto available = getAvailableBooks();
     
+    sortBooks(available);
     if (available.empty()) {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
@@ -173,7 +188,7 @@ void Library::displayAvailableBooks() {
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << available[i]->toString("") << "\n";
         cout << "---------------------------\n";
     }
 }
