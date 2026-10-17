@@ -74,7 +74,6 @@ string User::toFileFormat() const {
 // Parse from file format
 void User::fromFileFormat(const string& line) {
     stringstream ss(line);
-    string token;
     
     getline(ss, name, '|');
     getline(ss, userId, '|');
@@ -87,7 +86,9 @@ void User::fromFileFormat(const string& line) {
         stringstream booksSs(booksStr);
         string isbn;
         while (getline(booksSs, isbn, ',')) {
-            borrowedBooks.push_back(isbn);
+            if (!isbn.empty()) {
+                borrowedBooks.push_back(isbn);
+            }
         }
     }
 }
