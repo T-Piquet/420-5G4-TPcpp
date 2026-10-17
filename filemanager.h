@@ -19,8 +19,10 @@ public:
     // File operations
     bool saveLibraryData(Library& library);
     bool loadLibraryData(Library& library);
+    bool dataDirectoryExists() const;
     
     // Individual file operations
+    void saveJournal(const string& choix, const string& description);
     bool saveBooksToFile(Library& library);
     bool saveUsersToFile(Library& library);
     bool loadBooksFromFile(Library& library);

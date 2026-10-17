@@ -157,6 +157,11 @@ void Library::displayAllBooks() {
     for (size_t i = 0; i < books.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
         cout << books[i]->toString() << "\n";
+        if(books[i]->getAvailability() == false) {
+            string utilisateurId = books[i]->getBorrowerId();
+            string utilisateurNom = findUserById(utilisateurId)->getName();
+            cout << "Emprunté par: " << utilisateurNom << "\n";
+        }
         cout << "-------------------------\n";
     }
 }

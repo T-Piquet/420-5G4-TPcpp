@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include "filemanager.h"
+#include <ctime>
 
 using namespace std;
 
@@ -11,7 +12,26 @@ FileManager::FileManager(const string& booksFile, const string& usersFile)
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (!dataDirectoryExists()) {
+        cout << "Erreur : Le répertoire de données n'existe pas. Impossible de sauvegarder les données.\n";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
+}
+
+void FileManager::saveJournal(const string& choix, const string& description){
+    filesystem::path journalPath = filesystem::path("data") / "journal.txt";
+    ofstream file(journalPath, ios::app);
+    if (!file.is_open()) {
+        cout << "Le fichier " << journalPath << " n'a pas pu être ouvert.\n";
+    }else{
+        time_t maintenant = time(nullptr);
+        tm* dateHeure = localtime(&maintenant);
+        file << put_time(dateHeure, "%Y-%m-%d %H:%M:%S") << " - [" << choix << "] " << description << "\n";
+    }
+
+    
+
 }
 
 // Load all library data
@@ -120,4 +140,8 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+bool FileManager::dataDirectoryExists() const {
+    return !booksFileName.empty() && !usersFileName.empty();
 }

@@ -2,6 +2,7 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <algorithm>
 
 #include "library.h"
 #include "filemanager.h"
@@ -113,6 +114,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    fileManager.saveJournal("AJOUT LIVRE", newBook.toFileFormat());
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -124,6 +126,7 @@ int main(int argc, char* argv[]) {
                 
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    fileManager.saveJournal("RETRAIT LIVRE", library.findBookByISBN(isbn)->toFileFormat());
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -134,7 +137,10 @@ int main(int argc, char* argv[]) {
             case 3: { // Search by Title
                 string title = getInput("Entrez le titre à rechercher : ");
                 auto results = library.searchBooksByTitle(title);
-                
+                std::sort(results.begin(), results.end(), [](Book* a, Book* b) {
+                    return a->getAuthor() < b->getAuthor();
+                });
+                fileManager.saveJournal("RECHERCHE TITRE", title);
                 if (results.empty()) {
                     cout << "Aucun livre trouvé avec ce titre.\n";
                 } else {
@@ -144,6 +150,7 @@ int main(int argc, char* argv[]) {
                         cout << results[i]->toString() << "\n";
                         cout << "-----------------------------\n";
                     }
+
                 }
                 pauseForInput();
                 break;
@@ -152,7 +159,10 @@ int main(int argc, char* argv[]) {
             case 4: { // Search by Author
                 string author = getInput("Entrez l'auteur à rechercher : ");
                 auto results = library.searchBooksByAuthor(author);
-                
+                std::sort(results.begin(), results.end(), [](Book* a, Book* b) {
+                    return a->getTitle() < b->getTitle();
+                });
+                fileManager.saveJournal("RECHERCHE AUTEUR", author);
                 if (results.empty()) {
                     cout << "Aucun livre trouvé de cet auteur.\n";
                 } else {
@@ -169,11 +179,13 @@ int main(int argc, char* argv[]) {
             
             case 5: // Display All Books
                 library.displayAllBooks();
+                fileManager.saveJournal("AFFICHAGE LIVRES", "Tous les livres");
                 pauseForInput();
                 break;
             
             case 6: // Display Available Books
                 library.displayAvailableBooks();
+                fileManager.saveJournal("AFFICHAGE LIVRES DISPONIBLES", "Livres disponibles");
                 pauseForInput();
                 break;
             
@@ -187,6 +199,7 @@ int main(int argc, char* argv[]) {
                     User newUser(name, userId);
                     library.addUser(newUser);
                     cout << "Utilisateur ajouté avec succès !\n";
+                    fileManager.saveJournal("AJOUT UTILISATEUR", newUser.toFileFormat());
                 }
                 pauseForInput();
                 break;
@@ -195,6 +208,7 @@ int main(int argc, char* argv[]) {
             case 8: // Display All Users
                 library.displayAllUsers();
                 pauseForInput();
+                fileManager.saveJournal("AFFICHAGE UTILISATEURS", "Tous les utilisateurs");
                 break;
             
             case 9: { // Check Out Book
@@ -203,6 +217,7 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    fileManager.saveJournal("EMPRUNT LIVRE", library.findBookByISBN(isbn)->toFileFormat());
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -215,6 +230,7 @@ int main(int argc, char* argv[]) {
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                    fileManager.saveJournal("RETOUR LIVRE", library.findBookByISBN(isbn)->toFileFormat());
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
@@ -228,6 +244,7 @@ int main(int argc, char* argv[]) {
                 cout << "Livres Disponibles : " << library.getAvailableBookCount() << "\n";
                 cout << "Livres Empruntés : " << library.getCheckedOutBookCount() << "\n";
                 cout << "Total des Utilisateurs : " << library.getAllUsers().size() << "\n";
+                fileManager.saveJournal("STATISTIQUES BIBLIOTHÈQUE", "Toutes les statistiques");
                 pauseForInput();
                 break;
             }
@@ -235,6 +252,7 @@ int main(int argc, char* argv[]) {
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
+                    fileManager.saveJournal("SAUVEGARDE DONNÉES", "Données de la bibliothèque");
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
                 }
@@ -244,12 +262,14 @@ int main(int argc, char* argv[]) {
             
             case 13: { // Create Backup
                 fileManager.createBackup();
+                fileManager.saveJournal("CRÉATION SAUVEGARDE", "Sauvegarde de la bibliothèque");
                 pauseForInput();
                 break;
             }
             
             case 0: // Exit
                 cout << "Sauvegarde des données avant la fermeture...\n";
+                fileManager.saveJournal("FERMETURE APPLICATION", "Fermeture de l'application");
                 fileManager.saveLibraryData(library);
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
