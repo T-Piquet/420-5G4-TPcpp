@@ -15,7 +15,7 @@ private:
 public:
     // Constructors
     User();
-    User(const string& name, const string& userId);
+    User(const string& name);
     
     // Getters
     string getName() const;

@@ -51,6 +51,9 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+
+    sortingByTitle(results);
+
     return results;
 }
 
@@ -68,6 +71,9 @@ vector<Book*> Library::searchBooksByAuthor(const string& author) {
             results.push_back(book.get());
         }
     }
+
+    sortingByAuthor(results);
+
     return results;
 }
 
@@ -79,6 +85,9 @@ vector<Book*> Library::getAvailableBooks() {
             available.push_back(book.get());
         }
     }
+
+    sortingByTitle(available);
+
     return available;
 }
 
@@ -88,12 +97,37 @@ vector<Book*> Library::getAllBooks() {
     for (auto& book : books) {
         allBooks.push_back(book.get());
     }
+
+    sortingByTitle(allBooks);
+
     return allBooks;
 }
 
 // Add user to library
-void Library::addUser(const User& user) {
+bool Library::addUser(User& user) {
+    int plusGrandId = 0;
+
+    for (size_t i = 0; i < users.size(); i++) {
+        int userIdCurrent = stoi(users[i]->getUserId());
+
+        if (userIdCurrent > plusGrandId) {
+            plusGrandId = userIdCurrent;
+        }
+    }
+
+    string userId = to_string(plusGrandId + 1);
+ 
+
+    if (findUserById(userId)) {
+       return false;
+    }
+
+    user.setUserId(userId);
+
+    // make_unique = créé un objet User et le place dans un pointeur intelligent (unique_ptr)
     users.push_back(make_unique<User>(user));
+
+    return true;
 }
 
 // Find user by ID
@@ -202,3 +236,34 @@ int Library::getAvailableBookCount() const {
         });
 }
 int Library::getCheckedOutBookCount() const { return getTotalBooks() - getAvailableBookCount(); }
+
+
+// Sorting books by title
+void Library::sortingByTitle(vector<Book*>& books) {
+
+    std::sort(
+        books.begin(), 
+        books.end(), 
+        [](const Book* a, const Book* b) 
+        {
+            return a->getTitle() < b->getTitle();
+        }
+    );
+
+    for (Book* book : books) {
+        cout << book->getTitle() << endl;
+    };
+}
+
+// Sorting books by author
+void Library::sortingByAuthor(vector<Book*>& books) {
+
+    std::sort(
+        books.begin(), 
+        books.end(), 
+        [](const Book* a, const Book* b) 
+        {
+            return a->getAuthor() < b->getAuthor();
+        }
+    );
+}

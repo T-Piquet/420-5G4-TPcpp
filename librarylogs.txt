@@ -1,0 +1,31 @@
+2026-10-17 01:29:47 - [AJOUT_LIVRE] Le prince charmant|Ski|26-235
+2026-10-17 01:29:57 - [AJOUT_LIVRE] Le prince charmant|Ski|26-235|dsfds|sf|456
+2026-10-17 01:34:16 - [AJOUT_LIVRE] Haha|wer|63-234
+2026-10-17 01:38:13 - [AJOUT_LIVRE] Her|She|3254-53254
+2026-10-16 21:51:00 - [AJOUT_LIVRE] Sur|Adfs|345-234
+2026-10-16 21:52:55 - [AJOUT_LIVRE] Hell|No|75434-345
+2026-10-16 22:28:27 - [AJOUT_LIVRE] La cote|sdf|345-345
+2026-10-16 22:29:08 - [SUPPRIMER_LIVRE] La cote|sdf|345-345|345-345
+2026-10-16 22:29:25 - [AJOUT_LIVRE] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53
+2026-10-16 22:29:42 - [RECH_LIVRE_TITRE] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga
+2026-10-16 22:29:52 - [RECH_LIVRE_AUTEUR] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli
+2026-10-16 22:30:00 - [AFFICHAGE_LIVRES] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli
+2026-10-16 22:30:10 - [AFFICHAGE_LIVRES_DISPO] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli
+2026-10-16 22:30:33 - [AFFICHAGE_LIVRES] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0
+2026-10-16 22:30:47 - [AFFICHAGE_USERS] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0
+2026-10-16 22:31:07 - [EMPPRUNT] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1
+2026-10-16 22:31:26 - [RETOUR] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1|63-53
+2026-10-16 22:31:31 - [STATISTIQUES] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1|63-53
+2026-10-16 22:31:38 - [SAUVEGARDER] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1|63-53|Erreur lors de la sauvegarde des données de la bibliothèque.
+2026-10-16 22:31:44 - [CREATE_BACKUP] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1|63-53|Erreur lors de la sauvegarde des données de la bibliothèque.
+2026-10-16 22:34:22 - [QUITTER] La cote|sdf|345-345|345-345|Garde|Tulipe|63-53|Ga|Tuli|Ryan||0|63-53|1|63-53|Erreur lors de la sauvegarde des données de la bibliothèque.
+2026-10-16 22:44:49 - [AJOUT_USER] ||0
+2026-10-16 22:45:00 - [AJOUT_USER] ||0|Richard||0
+2026-10-16 22:55:37 - [AJOUT_USER] Tom||0
+2026-10-16 22:55:52 - [AFFICHAGE_USERS] 
+2026-10-16 22:56:25 - [AJOUT_LIVRE] Roi du lion|Shopin|612-345
+2026-10-16 22:56:39 - [AJOUT_USER] Bob||0
+2026-10-16 23:07:01 - [AJOUT_USER] Romeo||0
+2026-10-16 23:09:04 - [AJOUT_USER] Bob||0
+2026-10-16 23:19:36 - [AJOUT_USER] Helen||0
+2026-10-16 23:27:25 - [AJOUT_USER] Merlin|1|0
