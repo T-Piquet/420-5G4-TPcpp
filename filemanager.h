@@ -15,6 +15,7 @@ private:
 public:
     // Constructor
     FileManager(const string& booksFile, const string& usersFile);
+    void logActivity(const string& action, const string& details);
     
     // File operations
     bool saveLibraryData(Library& library);
