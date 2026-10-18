@@ -115,6 +115,44 @@ vector<User*> Library::getAllUsers() {
     return allUsers;
 }
 
+string Library::generateNextUserId(){
+    int maxNumber = 0;
+
+    for(auto& user : users){
+        string id =  user->getUserId();
+
+        if(id.size() > 3 && id.substr(0, 3) == "USR"){
+            string idPart = id.substr(3);
+
+            bool estChiffre = true;
+
+            for (char c : idPart) {
+                if (c < '0' || c > '9') {
+                    estChiffre = false;
+                }
+            }
+
+            if(estChiffre){
+                int number = stoi(idPart);
+                if (number > maxNumber) {
+                    maxNumber = number;
+                }
+            }
+        }
+    }
+
+    int nextNumber = maxNumber + 1;
+    string numberText = to_string(nextNumber);
+
+    if (nextNumber < 10) {
+        numberText = "00" + numberText;
+    } else if (nextNumber < 100) {
+        numberText = "0" + numberText;
+    }
+
+    return "USR" + numberText;
+}
+
 // Check out book
 bool Library::checkOutBook(const string& isbn, const string& userId) {
     Book* book = findBookByISBN(isbn);
@@ -152,6 +190,13 @@ void Library::displayAllBooks() {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    sort(books.begin(), books.end(), [](const unique_ptr<Book>& a, const unique_ptr<Book>& b) {
+        if (a->getTitle() == b->getTitle()) {
+            return a->getAuthor() < b->getAuthor();
+        }
+        return a->getTitle() < b->getTitle();
+    });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
     for (size_t i = 0; i < books.size(); ++i) {
