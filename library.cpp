@@ -147,16 +147,31 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
+void Library::displayAllBooks(bool trierParAuteur) {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+    vector<Book> listeBooks;
+
+    for(auto& book : books){
+        listeBooks.push_back(*book);
+    }
+
+    if(trierParAuteur) {
+        sort(listeBooks.begin(), listeBooks.end(), [](Book a, Book b){
+            return a.getAuthor() < b.getAuthor();
+        });
+    }else{
+        sort(listeBooks.begin(), listeBooks.end(), [](Book a, Book b){
+            return a.getTitle() < b.getTitle();
+        });
+    }
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < listeBooks.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << listeBooks[i].toString() << "\n";
         cout << "-------------------------\n";
     }
 }

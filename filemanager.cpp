@@ -1,13 +1,15 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <ctime>
+#include <iomanip>
 #include "filemanager.h"
 
 using namespace std;
 
 // Constructor
-FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+FileManager::FileManager(const string& booksFile, const string& usersFile, const string& journalFile)
+    : booksFileName(booksFile), usersFileName(usersFile), journalsFileName(journalFile) {}
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
@@ -53,6 +55,24 @@ bool FileManager::saveUsersToFile(Library& library) {
     
     file.close();
     return true;
+}
+
+bool FileManager::creerJournal(const string& action, const string& info) {
+
+    ofstream file(journalsFileName, ios::app);
+    if(!file.is_open()) {
+        cout << "Aucun fichier de journal existant trouvé. Démarrage avec une bibliothèque vide.\n";
+        return false;
+    }
+
+    time_t maintenant = time(nullptr);
+    char heure[20];
+    strftime(heure, sizeof(heure), "%Y-%m-%d %H:%M:%S", localtime(&maintenant));
+
+    file << heure << "-" << " [" << action << "] " << info << "\n";
+    file.close();
+    return true;
+
 }
 
 // Load books from file
