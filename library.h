@@ -38,10 +38,12 @@ public:
     bool returnBook(const string& isbn);
     
     // Display methods
-    void displayAllBooks();
-    void displayAvailableBooks();
+    void displayAllBooks(const string &filter);
+    void displayAllBooksName(const string &filter);
+    void displayAvailableBooks(const string &filter);
+    void displayAvailableBooksName(const string &filter);
     void displayAllUsers();
-    
+
     // Statistics
     int getTotalBooks() const;
     int getAvailableBookCount() const;

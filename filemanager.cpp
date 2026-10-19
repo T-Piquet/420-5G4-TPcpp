@@ -22,18 +22,43 @@ bool FileManager::loadLibraryData(Library& library) {
 }
 
 // Save books to file
-bool FileManager::saveBooksToFile(Library& library) {
+bool FileManager::saveBooksToFile(Library &library)
+{
     ofstream file(booksFileName);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         cout << "Erreur : Impossible d'ouvrir " << booksFileName << " en écriture.\n";
+        cout << "Vous devez mettre l'options --data-dir ../data dans votre commande de lancement";
+
+        filesystem::path path =
+            filesystem::path(booksFileName).parent_path() / "data" / "books.txt";
+
+        ofstream backupFile(path, ios::app);
+
+        if (!backupFile.is_open())
+        {
+            cout << "Erreur : Impossible d'ouvrir le fichier de secours"
+                 << path << "\n";
+            return false;
+        }
+
+        auto books = library.getAllBooks();
+
+        for (Book *book : books)
+        {
+            backupFile << book->toFileFormat() << "\n";
+        }
+
+        file.close();
         return false;
     }
-    
+
     auto books = library.getAllBooks();
-    for (Book* book : books) {
+    for (Book *book : books)
+    {
         file << book->toFileFormat() << "\n";
     }
-    
+
     file.close();
     return true;
 }
@@ -120,4 +145,23 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+void FileManager::sauvgarderEvenementJournal(const string &evenement, const string &description)
+{
+    filesystem::path path = filesystem::path(booksFileName).parent_path() / "journal.txt";
+
+    ofstream file(path, ios::app);
+
+    if (file.is_open())
+    {
+        time_t presentTime = time(nullptr);
+        tm *dateTime = localtime(&presentTime);
+
+        file << put_time(dateTime, "%Y-%m-%d %H:%M:%S") << " - [" << evenement << "] " << description << "\n";
+    }
+    else
+    {
+        cout << "Erreur, l'écriture dans le journal à échouer : " << path << "\n";
+    }
 }

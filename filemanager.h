@@ -29,6 +29,7 @@ public:
     // Utility methods
     bool fileExists(const string& filename);
     void createBackup();
+    void sauvgarderEvenementJournal(const string& evenement, const string& description);
 };
 
 #endif
