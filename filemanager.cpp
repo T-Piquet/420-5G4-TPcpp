@@ -1,6 +1,9 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <regex>
+#include <ctime>
+
 #include "filemanager.h"
 
 using namespace std;
@@ -100,6 +103,26 @@ bool FileManager::loadUsersFromFile(Library& library) {
     
     file.close();
     cout << "Chargé " << count << " utilisateur(s) depuis le fichier.\n";
+
+    // === Mettre à jour le compteur d'ID utilisateur ===
+    int maxId = 0;
+    regex idPattern("USR(\\d+)");
+    smatch match;
+
+    auto usersList = library.getAllUsers();
+    for (User* u : usersList) {
+        string id = u->getUserId();
+        if (regex_search(id, match, idPattern)) {
+            int idNum = stoi(match[1]);
+            if (idNum > maxId) maxId = idNum;
+        }
+    }
+
+    // Initialise le compteur global
+    User::setUserCount(maxId);
+    cout << "Dernier ID détecté : USR" << maxId << endl;
+
+
     return true;
 }
 
@@ -107,6 +130,28 @@ bool FileManager::loadUsersFromFile(Library& library) {
 bool FileManager::fileExists(const string& filename) {
     ifstream file(filename);
     return file.good();
+}
+
+void FileManager::logActivity(const string& action, const string& details) {
+    // Trouver le dossier où se trouvent les fichiers de données
+    filesystem::path dataDir = filesystem::path(booksFileName).parent_path();
+    filesystem::path logPath = dataDir / "journal.txt";
+
+    ofstream logFile(logPath, ios::app);
+    if (!logFile.is_open()) {
+        cout << "Erreur : Impossible d'ouvrir le fichier de journalisation.\n";
+        return;
+    }
+
+    // Obtenir la date et l'heure actuelles
+    time_t now = time(nullptr);
+    tm* localTime = localtime(&now);
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localTime);
+
+    // Écrire la ligne dans le journal
+    logFile << buffer << " - [ " << action << " ] " << details << "\n";
+    logFile.close();
 }
 
 // Create backup
