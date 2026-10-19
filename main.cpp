@@ -49,6 +49,25 @@ void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
 
+void saveJournal(FileManager fileManager, const string fileName, const string mess){
+    auto tp = std::chrono::system_clock::now();
+    
+    
+    std::time_t time = std::chrono::system_clock::to_time_t(tp);
+    std::tm local_tm = *std::localtime(&time);
+    
+    
+    std::stringstream ss;
+    ss << std::put_time(&local_tm, "[%Y-%m-%d %H:%M:%S] ") << mess;
+
+    std::string message = ss.str();
+
+    std::cout << message << std::endl;
+
+    fileManager.saveJournalToFile(fileName, message);
+
+}
+
 int main(int argc, char* argv[]) {
     string dataDir;
 
@@ -70,15 +89,19 @@ int main(int argc, char* argv[]) {
 
     string booksFile;
     string usersFile;
+    string journalFile;
     if (!dataDir.empty()) {
         if (!filesystem::is_directory(dataDir)) {
             cerr << "Erreur : le répertoire " << dataDir << " n'existe pas.\n";
             printUsage(argv[0]);
             return 1;
         }
-        booksFile = (filesystem::path(dataDir) / "books.txt").string();
-        usersFile = (filesystem::path(dataDir) / "users.txt").string();
-    }
+    }else{
+        booksFile = (filesystem::path(dataDir) /".."/ "data"/"books.txt").string();
+        usersFile = (filesystem::path(dataDir) /".." /"data"/ "users.txt").string();
+        journalFile = (filesystem::path(dataDir)/".."/"data"/"journal.txt").string();
+        }
+    
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
@@ -111,9 +134,16 @@ int main(int argc, char* argv[]) {
                 if (library.findBookByISBN(isbn)) {
                     cout << "Erreur : Un livre avec l'ISBN " << isbn << " existe déjà.\n";
                 } else {
-                    Book newBook(title, author, isbn);
-                    library.addBook(newBook);
-                    cout << "Livre ajouté avec succès !\n";
+                    if(library.findBookByAuthorName(title,author)){
+                        cout << "Erreur : Un livre avec le même titre et auteur existe.\n"; 
+                    }else{
+                        Book newBook(title, author, isbn);
+                        library.addBook(newBook);
+                        cout << "Livre ajouté avec succès !\n";
+                        std::string mess = "- [AJOUT LIVRE] " + title + " | " + author + " | isbn\n";
+                        saveJournal(fileManager,journalFile,mess);
+                    }
+                    
                 }
                 pauseForInput();
                 break;
@@ -124,6 +154,9 @@ int main(int argc, char* argv[]) {
                 
                 if (library.removeBook(isbn)) {
                     cout << "Livre supprimé avec succès !\n";
+                    std::string mess = "- [SUPP LIVRE] " + isbn + "\n";
+                    saveJournal(fileManager,journalFile,mess);
+                    
                 } else {
                     cout << "Livre non trouvé.\n";
                 }
@@ -187,6 +220,8 @@ int main(int argc, char* argv[]) {
                     User newUser(name, userId);
                     library.addUser(newUser);
                     cout << "Utilisateur ajouté avec succès !\n";
+                    std::string mess = "- [AJOUT USR] " + name + " | " + userId + "\n";
+                    saveJournal(fileManager,journalFile,mess);
                 }
                 pauseForInput();
                 break;
@@ -203,6 +238,8 @@ int main(int argc, char* argv[]) {
                 
                 if (library.checkOutBook(isbn, userId)) {
                     cout << "Livre emprunté avec succès !\n";
+                    std::string mess = "- [EMPRUNT] Isbn: " + isbn + " | UserId:" + userId + "\n";
+                        saveJournal(fileManager,journalFile,mess);
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
                 }
@@ -215,6 +252,8 @@ int main(int argc, char* argv[]) {
                 
                 if (library.returnBook(isbn)) {
                     cout << "Livre retourné avec succès !\n";
+                     std::string mess = "- [RETOUR] Isbn: " + isbn + " |\n";
+                        saveJournal(fileManager,journalFile,mess);
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
                 }
@@ -261,6 +300,7 @@ int main(int argc, char* argv[]) {
                 break;
         }
     }
+
     
     return 0;
 }

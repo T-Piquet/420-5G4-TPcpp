@@ -5,12 +5,15 @@
 
 #include "library.h"
 
+class Library;
+
 using namespace std;
 
 class FileManager {
 private:
     string booksFileName;
     string usersFileName;
+    
 
 public:
     // Constructor
@@ -29,6 +32,9 @@ public:
     // Utility methods
     bool fileExists(const string& filename);
     void createBackup();
+
+    //journal
+    void saveJournalToFile(string file,string  mess);
 };
 
 #endif

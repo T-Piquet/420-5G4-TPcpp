@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include "filemanager.h"
+#include "library.h"
 
 using namespace std;
 
@@ -53,6 +54,19 @@ bool FileManager::saveUsersToFile(Library& library) {
     
     file.close();
     return true;
+}
+
+void FileManager::saveJournalToFile(const string fileJour,const string mess) {
+    ofstream file(fileJour, ios::app);
+    if (!file.is_open()) {
+        cout << "Erreur : Impossible d'ouvrir " << fileJour << " en écriture.\n";
+        return;
+    }
+    
+    file << mess;
+    
+    file.close();
+    
 }
 
 // Load books from file
@@ -111,12 +125,19 @@ bool FileManager::fileExists(const string& filename) {
 
 // Create backup
 void FileManager::createBackup() {
-    if (fileExists(booksFileName)) {
+    if (!fileExists(booksFileName)) {
+        filesystem::copy_file(booksFileName, booksFileName + ".backup");
+    }else{
+        filesystem::remove(booksFileName + ".backup");
         filesystem::copy_file(booksFileName, booksFileName + ".backup");
     }
     
-    if (fileExists(usersFileName)) {
+    if (!fileExists(usersFileName)) {
         filesystem::copy_file(usersFileName, usersFileName + ".backup");
+    }else{
+        filesystem::remove(usersFileName + ".backup");
+         filesystem::copy_file(usersFileName, usersFileName + ".backup");
+
     }
     
     cout << "Fichiers de sauvegarde créés.\n";

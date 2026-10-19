@@ -23,6 +23,7 @@ public:
     void addBook(const Book& book);
     bool removeBook(const string& isbn);
     Book* findBookByISBN(const string& isbn);
+    Book* findBookByAuthorName(const string& title,const string& author);
     vector<Book*> searchBooksByTitle(const string& title);
     vector<Book*> searchBooksByAuthor(const string& author);
     vector<Book*> getAvailableBooks();
@@ -46,6 +47,8 @@ public:
     int getTotalBooks() const;
     int getAvailableBookCount() const;
     int getCheckedOutBookCount() const;
+
+    
 };
 
 #endif
