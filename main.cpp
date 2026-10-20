@@ -72,7 +72,6 @@ void ajouterJournal(const string &journalFile, const string &action, const strin
 
     journal << put_time(date, "%Y-%m-%d %H:%M:%S") << " - [" << action << "] " << infos << endl;
 
-    cout << "DEBUG : Activite enregistree : " << action << endl;
     journal.close();
 }
 
@@ -289,7 +288,7 @@ int main(int argc, char *argv[])
                 Book *book = library.findBookByISBN(isbn);
                 User *user = library.findUserById(userId);
 
-                string infos = book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|" + user->getName();
+                string infos = book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|0|" + user->getName();
 
                 ajouterJournal(journalFile, "EMPRUNT LIVRE", infos);
                 cout << "Livre emprunté avec succès !\n";
