@@ -23,3 +23,5 @@ Antoine Dubois|USR022|
 Nathalie Guerin|USR023|
 Olivier Masson|USR024|
 Valérie Simon|USR025|
+Toni Eliamokhtar|USR026|
+TestAutomatiqueID|USR027|
