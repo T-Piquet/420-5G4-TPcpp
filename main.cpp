@@ -62,11 +62,17 @@ void ajouterJournal(const string &journalFile, const string &action, const strin
 {
     ofstream journal(journalFile, ios::app);
 
+    if (!journal.is_open())
+    {
+        cout << "Erreur : Impossible d'ouvrir le journal ! " << journalFile << " pour l'écriture.\n";
+        return;
+    }
     time_t now = time(0);
     tm *date = localtime(&now);
 
     journal << put_time(date, "%Y-%m-%d %H:%M:%S") << " - [" << action << "] " << infos << endl;
 
+    cout << "DEBUG : Activite enregistree : " << action << endl;
     journal.close();
 }
 
