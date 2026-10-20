@@ -257,25 +257,37 @@ int main(int argc, char *argv[])
         case 7:
         { // Add User
             string name = getInput("Entrez le nom de l'utilisateur : ");
-            string userId = getInput("Entrez l'ID de l'utilisateur : ");
 
-            if (library.findUserById(userId))
+            int numero = library.getAllUsers().size() + 1;
+            string userId;
+
+            do
             {
-                cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
-            }
-            else
-            {
-                User newUser(name, userId);
-                library.addUser(newUser);
+                userId = "USR";
 
-                ajouterJournal(journalFile, "AJOUT UTILISATEUR", newUser.toFileFormat());
+                if (numero < 10)
+                {
+                    userId += "00";
+                }
+                else if (numero < 100)
+                {
+                    userId += "0";
+                }
 
-                cout << "Utilisateur ajouté avec succès !\n";
-            }
+                userId += to_string(numero);
+                numero++;
+            } while (library.findUserById(userId) != nullptr);
+
+            User newUser(name, userId);
+            library.addUser(newUser);
+
+            ajouterJournal(journalFile, "AJOUT UTILISATEUR", newUser.toFileFormat());
+
+            cout << "Utilisateur ajouté avec succès ! ID : " << userId << endl;
+
             pauseForInput();
             break;
         }
-
         case 8: // Display All Users
             library.displayAllUsers();
             pauseForInput();
