@@ -252,9 +252,14 @@ int main(int argc, char *argv[])
         }
 
         case 5: // Display All Books
-            library.displayAllBooks();
+        {
+            string choixTri = getInput("Trier par titre (1) ou par auteur (2) ? ");
+
+            library.displayAllBooks(choixTri == "2");
+
             pauseForInput();
             break;
+        }
 
         case 6: // Display Available Books
             library.displayAvailableBooks();

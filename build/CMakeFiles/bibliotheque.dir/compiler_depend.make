@@ -936,6 +936,14 @@ CMakeFiles/bibliotheque.dir/main.cpp.o: ../main.cpp \
   /usr/include/x86_64-linux-gnu/c++/14/bits/basic_file.h \
   /usr/include/x86_64-linux-gnu/c++/14/bits/c++io.h \
   /usr/include/c++/14/bits/fstream.tcc \
+  /usr/include/c++/14/algorithm \
+  /usr/include/c++/14/bits/stl_algo.h \
+  /usr/include/c++/14/bits/algorithmfwd.h \
+  /usr/include/c++/14/bits/stl_heap.h \
+  /usr/include/c++/14/bits/uniform_int_dist.h \
+  /usr/include/c++/14/bits/stl_tempbuf.h \
+  /usr/include/c++/14/pstl/glue_algorithm_defs.h \
+  /usr/include/c++/14/pstl/execution_defs.h \
   ../library.h \
   /usr/include/c++/14/vector \
   /usr/include/c++/14/bits/stl_uninitialized.h \
@@ -943,7 +951,6 @@ CMakeFiles/bibliotheque.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/14/bits/stl_bvector.h \
   /usr/include/c++/14/bits/vector.tcc \
   /usr/include/c++/14/memory \
-  /usr/include/c++/14/bits/stl_tempbuf.h \
   /usr/include/c++/14/bits/stl_raw_storage_iter.h \
   /usr/include/c++/14/bits/align.h \
   /usr/include/c++/14/bits/shared_ptr_atomic.h \
@@ -951,7 +958,6 @@ CMakeFiles/bibliotheque.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/14/bits/atomic_lockfree_defines.h \
   /usr/include/c++/14/backward/auto_ptr.h \
   /usr/include/c++/14/pstl/glue_memory_defs.h \
-  /usr/include/c++/14/pstl/execution_defs.h \
   ../book.h \
   ../user.h \
   ../filemanager.h
