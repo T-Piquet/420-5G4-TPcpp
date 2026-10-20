@@ -110,3 +110,13 @@ string Book::toString() const
 
     return result;
 }
+
+// Méthode qui prépare les informations d'un livre pour les sauvegarder
+// dans un fichier .txt comme book.txt ou users.txt
+string Book::toFileFormat() const
+{
+    string result = title + "|" + author + "|" + isbn + "|";
+    result += (isAvailable ? "1" : "0");
+    result += "|" + borrowerId;
+    return result;
+}
