@@ -51,3 +51,29 @@ string Book::getBorrowerId() const
 {
     return this->borrowerId;
 }
+
+// Setters
+void Book::setTitle(const string &title)
+{
+    this->title = title;
+}
+
+void Book::setAuthor(const string &author)
+{
+    this->author = author;
+}
+
+void Book::setISBN(const string &isbn)
+{
+    this->isbn = isbn;
+}
+
+void Book::setAvailability(bool available)
+{
+    this->isAvailable = available;
+}
+
+void Book::setBorrowerId(const string &id)
+{
+    this->borrowerId = id;
+}
