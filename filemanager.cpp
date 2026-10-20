@@ -9,8 +9,12 @@ using namespace std;
 FileManager::FileManager(const string& booksFile, const string& usersFile)
     : booksFileName(booksFile), usersFileName(usersFile) {}
 
-// Save all library data
+// Save all library data 
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Erreur : Aucun répertoire de données spécifié (--data-dir). Impossible de sauvegarder les données.\n";
+        return false;
+    }
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -120,4 +124,15 @@ void FileManager::createBackup() {
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+void FileManager::logActivity(const string& action, const string& details) {
+    ofstream logFile("activity_log.txt", ios::app);
+    if(!logFile.is_open()) {
+        cout << "Erreur : Impossible d'ouvrir le fichier de journalisation.\n";
+        return;
+    }
+    time_t now = time(nullptr);
+    logFile << put_time(localtime(&now), "%Y-%m-%d %H:%M:%S") << " - [" << action << "] " << details << "\n";
+    logFile.close();
 }

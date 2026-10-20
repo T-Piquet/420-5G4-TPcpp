@@ -2,7 +2,7 @@
 #include <algorithm>
 
 #include "library.h"
-
+#include <boost/algorithm/string.hpp>
 using namespace std;
 
 // Constructor
@@ -10,6 +10,7 @@ Library::Library() {}
 
 // Add book to library
 void Library::addBook(const Book& book) {
+
     books.push_back(make_unique<Book>(book));
 }
 
@@ -91,6 +92,43 @@ vector<Book*> Library::getAllBooks() {
     return allBooks;
 }
 
+//Vérifier si un livre est un doublon avec le titre auteur et isbn
+bool Library::isDuplicate(const string& title, const string& author, const string& isbn) {
+    for (const auto& book : books) {
+        // même ISBN = doublon
+        if (book->getISBN() == isbn) {
+            return true;
+        }
+        // même titre ET même auteur (sans tenir compte des majuscules ni des espaces) = doublon
+        if (boost::algorithm::iequals(boost::algorithm::trim_copy(book->getTitle()), boost::algorithm::trim_copy(title)) &&
+            boost::algorithm::iequals(boost::algorithm::trim_copy(book->getAuthor()), boost::algorithm::trim_copy(author))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+//Afficher un livre avec le nom de l'emprunteur
+string Library::bookToString(const Book* book) {
+    string nom;
+    if (!book->getAvailability()) {
+        User* user = findUserById(book->getBorrowerId());
+        // Si le livre n'a pas d'ID, cherche l'utilisateur qui l'a dans ses emprunts
+        if (!user) {
+            for (auto& u : users) {
+                if (u->hasBorrowedBook(book->getISBN())) {
+                    user = u.get();
+                    break;
+                }
+            }
+        }
+        if (user) {
+            nom = user->getName();
+        }
+    }
+    return book->toString(nom);
+}
+
 // Add user to library
 void Library::addUser(const User& user) {
     users.push_back(make_unique<User>(user));
@@ -113,6 +151,29 @@ vector<User*> Library::getAllUsers() {
         allUsers.push_back(user.get());
     }
     return allUsers;
+}
+
+//Numerotation automatique des id users
+string Library::generateUserId() const {
+    int numMax = 0;
+    for (const auto& user : users) {
+        string id = user->getUserId();
+        if (id.size() > 3 && id.substr(0, 3) == "USR") {
+            try {
+                int num = stoi(id.substr(3));
+                if (num > numMax) {
+                    numMax = num;
+                }
+            } catch (const invalid_argument&) {
+                // Si l y a une exception, on ignore cet ID et on continue
+            }
+        }
+    }
+    string num = to_string(numMax + 1);
+    while (num.length() < 3) {
+        num = "0" + num;
+    }
+    return "USR" + num;
 }
 
 // Check out book
@@ -146,17 +207,30 @@ bool Library::returnBook(const string& isbn) {
     return false;
 }
 
+//pour trier les livre
+void Library::sortBooks(vector<Book*>& bookList) {
+    sort(bookList.begin(), bookList.end(), [](Book* a, Book* b) {
+        if (a->getTitle() == b->getTitle()) {
+            return a->getAuthor() < b->getAuthor();
+        }
+        return a->getTitle() < b->getTitle();
+    });
+}
+
 // Display all books
 void Library::displayAllBooks() {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
-    
+    //sort le pointeur de la liste de livre
+    auto list = getAllBooks();
+    sortBooks(list);
+
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < list.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << bookToString(list[i]) << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -169,11 +243,15 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+    //sort le pointeur de la liste de livre
+    auto listAvailable = getAvailableBooks();
+    sortBooks(listAvailable);
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
-    for (size_t i = 0; i < available.size(); ++i) {
+    for (size_t i = 0; i < listAvailable.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << bookToString(listAvailable[i]) << "\n";
         cout << "---------------------------\n";
     }
 }
