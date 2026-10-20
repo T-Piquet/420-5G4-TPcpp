@@ -267,6 +267,9 @@ int main(int argc, char *argv[])
             {
                 User newUser(name, userId);
                 library.addUser(newUser);
+
+                ajouterJournal(journalFile, "AJOUT UTILISATEUR", newUser.toFileFormat());
+
                 cout << "Utilisateur ajouté avec succès !\n";
             }
             pauseForInput();
