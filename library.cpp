@@ -9,6 +9,7 @@ using namespace std;
 Library::Library() {}
 
 // Add book to library
+
 void Library::addBook(const Book& book) {
     books.push_back(make_unique<Book>(book));
 }
@@ -51,6 +52,18 @@ vector<Book*> Library::searchBooksByTitle(const string& title) {
             results.push_back(book.get());
         }
     }
+
+    // Tri STL par titre puis auteur
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+        bool res;
+        if (a->getTitle() != b->getTitle()) {
+            res = a->getTitle() < b->getTitle();
+        } else {
+            res = a->getAuthor() < b->getAuthor();
+        }
+        return res;
+    });
+
     return results;
 }
 
@@ -68,6 +81,18 @@ vector<Book*> Library::searchBooksByAuthor(const string& author) {
             results.push_back(book.get());
         }
     }
+
+    // Tri STL par titre puis auteur
+    sort(results.begin(), results.end(), [](const Book* a, const Book* b) {
+        bool res;
+        if (a->getTitle() != b->getTitle()) {
+            res = a->getTitle() < b->getTitle();
+        } else {
+            res = a->getAuthor() < b->getAuthor();
+        }
+        return res;
+    });
+
     return results;
 }
 
@@ -148,15 +173,29 @@ bool Library::returnBook(const string& isbn) {
 
 // Display all books
 void Library::displayAllBooks() {
-    if (books.empty()) {
+    auto allBooks = getAllBooks();
+    
+    if (allBooks.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    // Erreur de commit
+    // Tri STL par titre puis auteur
+    sort(allBooks.begin(), allBooks.end(), [](const Book* a, const Book* b) {
+        bool res;
+        if (a->getTitle() != b->getTitle()) {
+            res = a->getTitle() < b->getTitle();
+        } else {
+            res = a->getAuthor() < b->getAuthor();
+        }
+        return res;
+    });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < allBooks.size(); ++i) {
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << allBooks[i]->toString() << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -169,6 +208,17 @@ void Library::displayAvailableBooks() {
         cout << "Aucun livre disponible pour emprunt.\n";
         return;
     }
+
+    // Tri STL par titre puis auteur
+    sort(available.begin(), available.end(), [](const Book* a, const Book* b) {
+        bool res;
+        if (a->getTitle() != b->getTitle()) {
+            res = a->getTitle() < b->getTitle();
+        } else {
+            res = a->getAuthor() < b->getAuthor();
+        }
+        return res;
+    });
     
     cout << "\n=== LIVRES DISPONIBLES ===\n";
     for (size_t i = 0; i < available.size(); ++i) {
@@ -202,3 +252,24 @@ int Library::getAvailableBookCount() const {
         });
 }
 int Library::getCheckedOutBookCount() const { return getTotalBooks() - getAvailableBookCount(); }
+
+//Search if doublon exact in the library
+// s'il exist alors exits == true Si non exits == false
+bool Library::doublonsPlusIntelligente(const string& titre, const string& auteur, const string& isbn) const {
+    string lowerTitre = titre;
+    transform(lowerTitre.begin(), lowerTitre.end(), lowerTitre.begin(), ::tolower);
+    string lowerAuteur = auteur;
+    transform(lowerAuteur.begin(), lowerAuteur.end(), lowerAuteur.begin(), ::tolower);
+
+    for (const auto& book : books) {
+        if (book->getISBN() == isbn) return true;
+
+        string bookTitre = book->getTitle();
+        transform(bookTitre.begin(), bookTitre.end(), bookTitre.begin(), ::tolower);
+        string bookAuteur = book->getAuthor();
+        transform(bookAuteur.begin(), bookAuteur.end(), bookAuteur.begin(), ::tolower);
+
+        if (bookTitre == lowerTitre && bookAuteur == lowerAuteur) return true;
+    }
+    return false;
+}

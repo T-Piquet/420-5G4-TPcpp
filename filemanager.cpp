@@ -3,14 +3,25 @@
 #include <filesystem>
 #include "filemanager.h"
 
+// Import requis pour le journal
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+
 using namespace std;
 
 // Constructor
-FileManager::FileManager(const string& booksFile, const string& usersFile)
-    : booksFileName(booksFile), usersFileName(usersFile) {}
+FileManager::FileManager(const string& booksFile, const string& usersFile, const string& logFile)
+    : booksFileName(booksFile), usersFileName(usersFile), logFileName(logFile) {}
 
 // Save all library data
 bool FileManager::saveLibraryData(Library& library) {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Aucun répertoire de données spécifié. Sauvegarde ignorée.\n";
+        return false;
+    }
+    
     return saveBooksToFile(library) && saveUsersToFile(library);
 }
 
@@ -111,13 +122,46 @@ bool FileManager::fileExists(const string& filename) {
 
 // Create backup
 void FileManager::createBackup() {
+    if (booksFileName.empty() || usersFileName.empty()) {
+        cout << "Aucun répertoire de données spécifié. Création de sauvegarde ignorée.\n";
+        return;
+    }
+
     if (fileExists(booksFileName)) {
-        filesystem::copy_file(booksFileName, booksFileName + ".backup");
+        filesystem::copy_file(booksFileName, booksFileName + ".backup", filesystem::copy_options::overwrite_existing);
     }
     
     if (fileExists(usersFileName)) {
-        filesystem::copy_file(usersFileName, usersFileName + ".backup");
+        filesystem::copy_file(usersFileName, usersFileName + ".backup", filesystem::copy_options::overwrite_existing);
     }
     
     cout << "Fichiers de sauvegarde créés.\n";
+}
+
+// Log activity
+void FileManager::logActivity(const string& action, const string& details) {
+    if (!logFileName.empty()) {
+        ofstream file(logFileName, ios::app);
+    
+        if (file.is_open()) {
+            // Date et heure courante YYYY-MM-DD HH:MM:SS
+            auto now = chrono::system_clock::now();
+            time_t in_time_t = chrono::system_clock::to_time_t(now);
+            tm timeInfo;
+            
+            // obtenir le temps selon le os
+            #ifdef _WIN32
+                localtime_s(&timeInfo, &in_time_t);
+            #else
+                localtime_r(&in_time_t, &timeInfo);
+            #endif
+            
+            stringstream ss;
+            ss << put_time(&timeInfo, "%Y-%m-%d %H:%M:%S");
+
+            file << ss.str() << " - [" << action << "] " << details << "\n";
+
+            file.close();
+        }
+    }
 }
