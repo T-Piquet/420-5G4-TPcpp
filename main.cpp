@@ -293,6 +293,10 @@ int main(int argc, char *argv[])
 
             if (library.returnBook(isbn))
             {
+                Book *book = library.findBookByISBN(isbn);
+
+                ajouterJournal(journalFile, "RETOUR LIVRE", book->toFileFormat());
+
                 cout << "Livre retourné avec succès !\n";
             }
             else
