@@ -361,7 +361,13 @@ int main(int argc, char *argv[])
 
         case 12:
         { // Save Data
-            if (fileManager.saveLibraryData(library))
+            // Ici, il faut vérifier que les chemin des fichiers existent
+            if (booksFile.empty() || usersFile.empty())
+            {
+                cout << "Erreur : Aucun répertoire de données spécifié.\n";
+                cout << "Impossible de sauvegarder les données.\n";
+            }
+            else if (fileManager.saveLibraryData(library))
             {
                 cout << "Données de la bibliothèque sauvegardées avec succès !\n";
             }
@@ -381,8 +387,20 @@ int main(int argc, char *argv[])
         }
 
         case 0: // Exit
-            cout << "Sauvegarde des données avant la fermeture...\n";
-            fileManager.saveLibraryData(library);
+        {
+            if (booksFile.empty() || usersFile.empty())
+            {
+                cout << "Aucun répetoire de données spécifié.\n";
+                cout << "Sauvegarde automatique ignorées.\n";
+            }
+            else
+            {
+                cout << "Sauvegarde des données avant la fermeture...\n";
+                if (!fileManager.saveLibraryData(library))
+                {
+                    cout << "Erreur lors de la sauvegarde.\n";
+                }
+            }
             cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
             running = false;
             break;
@@ -391,6 +409,7 @@ int main(int argc, char *argv[])
             cout << "Choix invalide. Veuillez réessayer.\n";
             pauseForInput();
             break;
+        }
         }
     }
 
