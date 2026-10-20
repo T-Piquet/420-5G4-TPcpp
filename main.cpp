@@ -2,6 +2,11 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <sstream>
+#include <iomanip>
+#include <fstream>
+#include <vector>
+#include <ctime>
 
 #include "library.h"
 #include "filemanager.h"
@@ -45,6 +50,38 @@ string getInput(const string& prompt) {
     return input;
 }
 
+// Retourne la date et l'heure courante au format AAAA-MM-JJ HH:MM:SS
+string getCurrentDateTime() {
+    time_t now = time(nullptr);
+    tm localTime = *localtime(&now);
+    ostringstream oss;
+    oss << put_time(&localTime, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+// Construit une ligne du journal : "AAAA-MM-JJ HH:MM:SS - [ACTION] details"
+string makeLogLine(const string& action, const string& details) {
+    return getCurrentDateTime() + " - [" + action + "] " + details;
+}
+
+// Détails d'un livre au format du fichier books.txt, avec le nom de l'emprunteur
+string bookLogDetails(const Book& book, const string& borrowerName = "") {
+    return book.getTitle() + "|" + book.getAuthor() + "|" + book.getISBN() + "|"
+         + (book.getAvailability() ? "1" : "0") + "|" + borrowerName;
+}
+
+// Ajoute les lignes de la session à la fin du journal (créé s'il n'existe pas)
+void saveJournal(const string& logFile, const vector<string>& journal) {
+    ofstream file(logFile, ios::app);
+    if (!file.is_open()) {
+        cerr << "Erreur : Impossible d'écrire dans le journal " << logFile << ".\n";
+        return;
+    }
+    for (const string& line : journal) {
+        file << line << "\n";
+    }
+}
+
 void printUsage(const char* programName) {
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
@@ -82,10 +119,21 @@ int main(int argc, char* argv[]) {
 
     Library library;
     FileManager fileManager(booksFile, usersFile);
+
+    // Journal d'activités : dans le répertoire de données s'il est fourni,
+    // sinon dans le répertoire courant
+    string logFile = dataDir.empty() ? "journal.log"
+                                     : (filesystem::path(dataDir) / "journal.log").string();
+    vector<string> journal; // lignes du journal de la session, écrites à la sortie
     
     // Load existing data
-    cout << "Chargement des données de la bibliothèque...\n";
-    fileManager.loadLibraryData(library);
+    if (!booksFile.empty() && !usersFile.empty()) {
+        cout << "Chargement des données de la bibliothèque...\n";
+        fileManager.loadLibraryData(library);
+    } else {
+        cout << "Aucun répertoire de données spécifié (--data-dir). Démarrage avec une bibliothèque vide.\n";
+        cout << "Attention : les données ne seront pas sauvegardées.\n";
+    }
     
     int choice;
     bool running = true;
@@ -113,6 +161,7 @@ int main(int argc, char* argv[]) {
                 } else {
                     Book newBook(title, author, isbn);
                     library.addBook(newBook);
+                    journal.push_back(makeLogLine("AJOUT LIVRE", bookLogDetails(newBook)));
                     cout << "Livre ajouté avec succès !\n";
                 }
                 pauseForInput();
@@ -121,8 +170,13 @@ int main(int argc, char* argv[]) {
             
             case 2: { // Remove Book
                 string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
-                
+
+                // On garde une copie du livre pour le journal avant de le supprimer
+                Book* toRemove = library.findBookByISBN(isbn);
+                Book removedBook = toRemove ? *toRemove : Book();
+
                 if (library.removeBook(isbn)) {
+                    journal.push_back(makeLogLine("SUPPRESSION LIVRE", bookLogDetails(removedBook)));
                     cout << "Livre supprimé avec succès !\n";
                 } else {
                     cout << "Livre non trouvé.\n";
@@ -179,14 +233,35 @@ int main(int argc, char* argv[]) {
             
             case 7: { // Add User
                 string name = getInput("Entrez le nom de l'utilisateur : ");
-                string userId = getInput("Entrez l'ID de l'utilisateur : ");
-                
+
+                int maxNumero = 0;
+
+                for (const auto& user : library.getAllUsers()) {
+                    string id = user->getUserId();
+
+                    // Garde que les ID au format "USR" + chiffres
+                    if (id.size() > 3 && id.substr(0, 3) == "USR") {
+                        try {
+                            int numero = stoi(id.substr(3));
+                            maxNumero = max(maxNumero, numero);
+                        } catch (const exception&) {
+                            // rien faire
+                        }
+                    }
+                }
+
+                ostringstream oss;
+                oss << "USR" << setw(3) << setfill('0') << (maxNumero + 1);
+
+                string userId = oss.str();
+
                 if (library.findUserById(userId)) {
                     cout << "Erreur : Un utilisateur avec l'ID " << userId << " existe déjà.\n";
                 } else {
                     User newUser(name, userId);
                     library.addUser(newUser);
-                    cout << "Utilisateur ajouté avec succès !\n";
+                    journal.push_back(makeLogLine("AJOUT UTILISATEUR", name + "|" + userId));
+                    cout << "Utilisateur ajouté avec succès ! ID : " << userId << "\n";
                 }
                 pauseForInput();
                 break;
@@ -202,6 +277,8 @@ int main(int argc, char* argv[]) {
                 string userId = getInput("Entrez l'ID de l'utilisateur : ");
                 
                 if (library.checkOutBook(isbn, userId)) {
+                    journal.push_back(makeLogLine("EMPRUNT", bookLogDetails(*library.findBookByISBN(isbn),
+                                                  library.findUserById(userId)->getName())));
                     cout << "Livre emprunté avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible d'emprunter le livre. Vérifiez l'ISBN, l'ID utilisateur et la disponibilité du livre.\n";
@@ -212,8 +289,17 @@ int main(int argc, char* argv[]) {
             
             case 10: { // Return Book
                 string isbn = getInput("Entrez l'ISBN du livre à retourner : ");
-                
+
+                // On récupère le nom de l'emprunteur avant le retour
+                string borrowerName;
+                Book* bookToReturn = library.findBookByISBN(isbn);
+                if (bookToReturn) {
+                    User* borrower = library.findUserById(bookToReturn->getBorrowerId());
+                    if (borrower) borrowerName = borrower->getName();
+                }
+
                 if (library.returnBook(isbn)) {
+                    journal.push_back(makeLogLine("RETOUR", bookLogDetails(*bookToReturn, borrowerName)));
                     cout << "Livre retourné avec succès !\n";
                 } else {
                     cout << "Erreur : Impossible de retourner le livre. Vérifiez l'ISBN et que le livre est bien emprunté.\n";
@@ -234,6 +320,7 @@ int main(int argc, char* argv[]) {
             
             case 12: { // Save Data
                 if (fileManager.saveLibraryData(library)) {
+                    journal.push_back(makeLogLine("SAUVEGARDE", "Données sauvegardées"));
                     cout << "Données de la bibliothèque sauvegardées avec succès !\n";
                 } else {
                     cout << "Erreur lors de la sauvegarde des données de la bibliothèque.\n";
@@ -249,8 +336,16 @@ int main(int argc, char* argv[]) {
             }
             
             case 0: // Exit
-                cout << "Sauvegarde des données avant la fermeture...\n";
-                fileManager.saveLibraryData(library);
+                if (!booksFile.empty() && !usersFile.empty()) {
+                    cout << "Sauvegarde des données avant la fermeture...\n";
+                    if (fileManager.saveLibraryData(library)) {
+                        journal.push_back(makeLogLine("SAUVEGARDE", "Sauvegarde automatique à la sortie"));
+                    }
+                } else {
+                    cout << "Aucun répertoire de données spécifié (--data-dir) : les données ne sont pas sauvegardées.\n";
+                }
+                // Enregistrement du journal de la session
+                saveJournal(logFile, journal);
                 cout << "Merci d'avoir utilisé le Système de Gestion de Bibliothèque Personnelle !\n";
                 running = false;
                 break;
