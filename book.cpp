@@ -86,3 +86,10 @@ void Book::checkOut(const string &borrowerID)
     this->isAvailable = false;
     this->borrowerId = borrowerID;
 }
+
+// Méthode pour retourner un livre
+void Book::returnBook()
+{
+    this->isAvailable = true;
+    this->borrowerId = "";
+}
