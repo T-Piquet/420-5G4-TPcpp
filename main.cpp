@@ -5,6 +5,7 @@
 #include <fstream>
 #include <ctime>
 #include <iomanip>
+#include <algorithm>
 
 #include "library.h"
 #include "filemanager.h"
@@ -203,6 +204,9 @@ int main(int argc, char *argv[])
             string title = getInput("Entrez le titre à rechercher : ");
             auto results = library.searchBooksByTitle(title);
 
+            sort(results.begin(), results.end(), [](Book *a, Book *b)
+                 { return a->getTitle() < b->getTitle(); });
+
             if (results.empty())
             {
                 cout << "Aucun livre trouvé avec ce titre.\n";
@@ -225,6 +229,9 @@ int main(int argc, char *argv[])
         { // Search by Author
             string author = getInput("Entrez l'auteur à rechercher : ");
             auto results = library.searchBooksByAuthor(author);
+
+            sort(results.begin(), results.end(), [](Book *a, Book *b)
+                 { return a->getAuthor() < b->getAuthor(); });
 
             if (results.empty())
             {
