@@ -24,3 +24,29 @@ Book::Book(const string &title, const string &author, const string &isbn)
     this->isAvailable = true;
     this->borrowerId = "";
 }
+
+// Getters
+string Book::getTitle() const
+{
+    return this->title;
+}
+
+string Book::getAuthor() const
+{
+    return this->author;
+}
+
+string Book::getISBN() const
+{
+    return this->isbn;
+}
+
+bool Book::getAvailability() const
+{
+    return this->isAvailable;
+}
+
+string Book::getBorrowerId() const
+{
+    return this->borrowerId;
+}
