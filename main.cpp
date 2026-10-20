@@ -172,8 +172,17 @@ int main(int argc, char *argv[])
         { // Remove Book
             string isbn = getInput("Entrez l'ISBN du livre à supprimer : ");
 
+            Book *book = library.findBookByISBN(isbn);
+            string infos = "";
+
+            if (book != nullptr)
+            {
+                infos = book->toFileFormat();
+            }
+
             if (library.removeBook(isbn))
             {
+                ajouterJournal(journalFile, "SUPPRESSION LIVRE", infos);
                 cout << "Livre supprimé avec succès !\n";
             }
             else
