@@ -932,6 +932,10 @@ CMakeFiles/bibliotheque.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/14/ext/aligned_buffer.h \
   /usr/include/c++/14/bits/fs_dir.h \
   /usr/include/c++/14/bits/fs_ops.h \
+  /usr/include/c++/14/fstream \
+  /usr/include/x86_64-linux-gnu/c++/14/bits/basic_file.h \
+  /usr/include/x86_64-linux-gnu/c++/14/bits/c++io.h \
+  /usr/include/c++/14/bits/fstream.tcc \
   ../library.h \
   /usr/include/c++/14/vector \
   /usr/include/c++/14/bits/stl_uninitialized.h \

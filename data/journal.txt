@@ -1,1 +1,2 @@
 2026-10-20 02:09:25 - [AJOUT LIVRE] Test2AjoutLivre journal.txt|Toni Eliamokhtar|AB234|1|
+2026-10-20 02:47:35 - [EMPRUNT LIVRE] Test1Ajout livre|Toni Eliamokhtar|AB123|Marie Dubois

@@ -271,6 +271,12 @@ int main(int argc, char *argv[])
 
             if (library.checkOutBook(isbn, userId))
             {
+                Book *book = library.findBookByISBN(isbn);
+                User *user = library.findUserById(userId);
+
+                string infos = book->getTitle() + "|" + book->getAuthor() + "|" + book->getISBN() + "|" + user->getName();
+
+                ajouterJournal(journalFile, "EMPRUNT LIVRE", infos);
                 cout << "Livre emprunté avec succès !\n";
             }
             else
