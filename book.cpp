@@ -1,5 +1,6 @@
 #include <iostream>
 #include "book.h"
+#include <sstream>
 using namespace std;
 
 /* J'ai appris que si les méthodes dans le fichier .h ont été déclarés
@@ -119,4 +120,19 @@ string Book::toFileFormat() const
     result += (isAvailable ? "1" : "0");
     result += "|" + borrowerId;
     return result;
+}
+
+// Méthode qui lit les informations d'un livre
+void Book::fromFileFormat(const string &line)
+{
+    stringstream ss(line);
+    string availability;
+
+    getline(ss, title, '|');
+    getline(ss, author, '|');
+    getline(ss, isbn, '|');
+    getline(ss, availability, '|');
+    getline(ss, borrowerId);
+
+    isAvailable = (availability == "1" ? true : false);
 }
