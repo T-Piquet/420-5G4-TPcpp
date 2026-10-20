@@ -77,3 +77,12 @@ void Book::setBorrowerId(const string &id)
 {
     this->borrowerId = id;
 }
+
+// Méthodes
+
+// Méthode pour emprunter un livre
+void Book::checkOut(const string &borrowerID)
+{
+    this->isAvailable = false;
+    this->borrowerId = borrowerID;
+}
