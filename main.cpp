@@ -3,6 +3,8 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <ctime>
+#include <iomanip>
 
 #include "library.h"
 #include "filemanager.h"
@@ -55,6 +57,19 @@ void printUsage(const char *programName)
     cerr << "Usage: " << programName << " [--data-dir|-d <répertoire>]\n";
 }
 
+// Cette méthode ajoute une action et ses infos au journal sans effacer son contenu
+void ajouterJournal(const string &journalFile, const string &action, const string &infos)
+{
+    ofstream journal(journalFile, ios::app);
+
+    time_t now = time(0);
+    tm *date = localtime(&now);
+
+    journal << put_time(date, "%Y-%m-%d %H:%M:%S") << " - [" << action << "] " << infos << endl;
+
+    journal.close();
+}
+
 int main(int argc, char *argv[])
 {
     string dataDir;
@@ -97,7 +112,7 @@ int main(int argc, char *argv[])
     Library library;
     FileManager fileManager(booksFile, usersFile);
 
-    /*Avec ofstream, on ouvre le fichier en écriture. Avec os::app, on conserve le contenu de la fichier
+    /*Avec ofstream, on ouvre le fichier en écriture. Avec ios::app, on conserve le contenu de la fichier
     et on ajoute à la fin de celui-ci. Bien sûr, s'il n'existe pas, il sera créé. */
     string journalFile = "journal.txt";
 
