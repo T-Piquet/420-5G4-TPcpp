@@ -1,5 +1,6 @@
 #include <sstream>
 #include <algorithm>
+#include "utils.h"
 
 #include "user.h"
 
@@ -71,6 +72,16 @@ string User::toFileFormat() const {
     return result;
 }
 
+// Format for CSV storage
+string User::toCSV() const {
+    string result = name + "," + userId + ",";
+    for (size_t i = 0; i < borrowedBooks.size(); ++i) {
+        result += borrowedBooks[i];
+        if (i < borrowedBooks.size() - 1) result += ";";
+    }
+    return result;
+}
+
 // Parse from file format
 void User::fromFileFormat(const string& line) {
     stringstream ss(line);
@@ -90,4 +101,29 @@ void User::fromFileFormat(const string& line) {
             borrowedBooks.push_back(isbn);
         }
     }
+}
+
+// Parse from CSV
+void User::fromCSV(const string& line) {
+  stringstream ss(line);
+  string token;
+
+  getline(ss, name, ',');
+  getline(ss, userId, ',');
+
+  name = trim(name);
+  userId = trim(userId);
+
+  string booksStr;
+  getline(ss, booksStr, ',');
+  booksStr = trim(booksStr);
+
+  borrowedBooks.clear();
+  if (!booksStr.empty()) {
+    stringstream booksSs(booksStr);
+    string isbn;
+    while (getline(booksSs, isbn, ';')) {
+      borrowedBooks.push_back(trim(isbn));
+    }
+  }
 }

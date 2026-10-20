@@ -22,13 +22,21 @@ public:
     
     // Individual file operations
     bool saveBooksToFile(Library& library);
+    bool saveBooksToCSV(Library& library, string csvDir);
     bool saveUsersToFile(Library& library);
+    bool saveUsersToCSV(Library& library, string csvDir);
     bool loadBooksFromFile(Library& library);
     bool loadUsersFromFile(Library& library);
     
     // Utility methods
     bool fileExists(const string& filename);
     void createBackup();
+
+    // Import/Export
+    int importBooksCSV(Library& library, string csvPath);
+    int importUsersCSV(Library& library, string csvPath);
+    bool verifyBookConflict(Library &library, Book &book);
+    bool verifyUserConflict(Library &library, User &user);
 };
 
 #endif
