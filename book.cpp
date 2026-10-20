@@ -25,6 +25,7 @@ Book::Book(const string &title, const string &author, const string &isbn)
     this->borrowerId = "";
 }
 
+// const veut dire que la méthode ne modifie pas l'objet sur lequel elle est appelée.
 // Getters
 string Book::getTitle() const
 {
