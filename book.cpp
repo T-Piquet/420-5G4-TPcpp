@@ -93,3 +93,20 @@ void Book::returnBook()
     this->isAvailable = true;
     this->borrowerId = "";
 }
+
+// Méthode qui sert à transformer les infos d'un livre en chaîne
+// de caractères pour l'affichage
+string Book::toString() const
+{
+    string result = "Titre: " + title + "\nAuteur: " + author + "\nISBN: " + isbn;
+    if (isAvailable)
+    {
+        result += "\nDisponible: Oui";
+    }
+    else
+    {
+        result += "\nDisponible: Non\nEmprunteur ID: " + borrowerId;
+    }
+
+    return result;
+}
