@@ -1,0 +1,32 @@
+[
+{
+  "directory": "/workspaces/420-5G4-TPcpp/build",
+  "command": "/usr/bin/c++   -g -std=c++17 -Wall -Wextra -Wpedantic -o CMakeFiles/bibliotheque.dir/book.cpp.o -c /workspaces/420-5G4-TPcpp/book.cpp",
+  "file": "/workspaces/420-5G4-TPcpp/book.cpp",
+  "output": "CMakeFiles/bibliotheque.dir/book.cpp.o"
+},
+{
+  "directory": "/workspaces/420-5G4-TPcpp/build",
+  "command": "/usr/bin/c++   -g -std=c++17 -Wall -Wextra -Wpedantic -o CMakeFiles/bibliotheque.dir/filemanager.cpp.o -c /workspaces/420-5G4-TPcpp/filemanager.cpp",
+  "file": "/workspaces/420-5G4-TPcpp/filemanager.cpp",
+  "output": "CMakeFiles/bibliotheque.dir/filemanager.cpp.o"
+},
+{
+  "directory": "/workspaces/420-5G4-TPcpp/build",
+  "command": "/usr/bin/c++   -g -std=c++17 -Wall -Wextra -Wpedantic -o CMakeFiles/bibliotheque.dir/library.cpp.o -c /workspaces/420-5G4-TPcpp/library.cpp",
+  "file": "/workspaces/420-5G4-TPcpp/library.cpp",
+  "output": "CMakeFiles/bibliotheque.dir/library.cpp.o"
+},
+{
+  "directory": "/workspaces/420-5G4-TPcpp/build",
+  "command": "/usr/bin/c++   -g -std=c++17 -Wall -Wextra -Wpedantic -o CMakeFiles/bibliotheque.dir/main.cpp.o -c /workspaces/420-5G4-TPcpp/main.cpp",
+  "file": "/workspaces/420-5G4-TPcpp/main.cpp",
+  "output": "CMakeFiles/bibliotheque.dir/main.cpp.o"
+},
+{
+  "directory": "/workspaces/420-5G4-TPcpp/build",
+  "command": "/usr/bin/c++   -g -std=c++17 -Wall -Wextra -Wpedantic -o CMakeFiles/bibliotheque.dir/user.cpp.o -c /workspaces/420-5G4-TPcpp/user.cpp",
+  "file": "/workspaces/420-5G4-TPcpp/user.cpp",
+  "output": "CMakeFiles/bibliotheque.dir/user.cpp.o"
+}
+]

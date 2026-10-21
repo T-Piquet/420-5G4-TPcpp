@@ -152,11 +152,17 @@ void Library::displayAllBooks() {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
+
+    auto sortBooks = getAllBooks(); // Gestion des Données: Tri des résultats par titre, auteur pouur l'affichage
+    std::sort(sortBooks.begin(), sortBooks.end(), [](const Book* a, const Book* b){
+        return a->getTitle() < b->getTitle() && a->getAuthor() < b->getAuthor();
+    });
     
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
+    for (size_t i = 0; i < sortBooks.size(); ++i) {
+        User* borrower = findUserById(sortBooks[i]->getBorrowerId());
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+        cout << sortBooks[i]->toString(borrower) << "\n";
         cout << "-------------------------\n";
     }
 }
@@ -170,10 +176,15 @@ void Library::displayAvailableBooks() {
         return;
     }
     
+    auto sortBooks = available; // Gestion des Données: Tri des résultats par titre, auteur pouur l'affichage
+    std::sort(sortBooks.begin(), sortBooks.end(), [](const Book* a, const Book* b){
+        return a->getTitle() < b->getTitle() && a->getAuthor() < b->getAuthor();
+    });
     cout << "\n=== LIVRES DISPONIBLES ===\n";
-    for (size_t i = 0; i < available.size(); ++i) {
+    for (size_t i = 0; i < sortBooks.size(); ++i) {
+        User* borrower = findUserById(sortBooks[i]->getBorrowerId());
         cout << "\nLivre " << (i + 1) << " :\n";
-        cout << available[i]->toString() << "\n";
+        cout << sortBooks[i]->toString(borrower) << "\n";
         cout << "---------------------------\n";
     }
 }
