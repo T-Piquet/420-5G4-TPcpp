@@ -36,7 +36,9 @@ public:
     // Library operations
     bool checkOutBook(const string& isbn, const string& userId);
     bool returnBook(const string& isbn);
-    
+
+    void displayAllBooks(bool trierParAuteur);
+
     // Display methods
     void displayAllBooks();
     void displayAvailableBooks();

@@ -147,19 +147,56 @@ bool Library::returnBook(const string& isbn) {
 }
 
 // Display all books
-void Library::displayAllBooks() {
+void Library::displayAllBooks(bool trierParAuteur) {
     if (books.empty()) {
         cout << "Aucun livre dans la bibliothèque.\n";
         return;
     }
-    
+
+    vector<Book> listeLivres;
+
+    for (const auto& livre : books) {
+        listeLivres.push_back(*livre);
+    }
+
+    if (trierParAuteur) {
+        sort(listeLivres.begin(), listeLivres.end(),
+            [](const Book& a, const Book& b) {
+                return a.getAuthor() < b.getAuthor();
+            });
+    }
+    else {
+        sort(listeLivres.begin(), listeLivres.end(),
+            [](const Book& a, const Book& b) {
+                return a.getTitle() < b.getTitle();
+            });
+    }
+
     cout << "\n=== TOUS LES LIVRES ===\n";
-    for (size_t i = 0; i < books.size(); ++i) {
-        cout << "\nLivre " << (i + 1) << " :\n";
-        cout << books[i]->toString() << "\n";
+
+    for (const Book& book : listeLivres) {
+        cout << "Titre: " << book.getTitle() << "\n";
+        cout << "Auteur: " << book.getAuthor() << "\n";
+        cout << "ISBN: " << book.getISBN() << "\n";
+        cout << "Disponible: "
+             << (book.getAvailability() ? "Oui" : "Non") << "\n";
+
+        if (!book.getAvailability()) {
+            User* borrower = findUserById(book.getBorrowerId());
+
+            if (borrower != nullptr) {
+                cout << "Emprunteur: "
+                     << borrower->getName() << "\n";
+            }
+            else {
+                cout << "Emprunteur: utilisateur introuvable\n";
+            }
+        }
+
         cout << "-------------------------\n";
     }
 }
+
 
 // Display available books
 void Library::displayAvailableBooks() {
